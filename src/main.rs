@@ -26,6 +26,7 @@ use load_data::LoadDataLibrary;
 use sharing::SharingManager;
 use storage::LocalStorage;
 
+
 // Define AttachedImage locally
 #[derive(Clone)]
 pub struct AttachedImage {
@@ -267,7 +268,7 @@ impl eframe::App for BallisticsApp {
                 Screen::LoadLibrary => self.show_load_library_screen(ui),
                 Screen::Sharing => self.show_sharing_screen(ui),
                 Screen::Settings => self.show_settings_screen(ui),
-                Screen::About => self.show_about_screen(ui),
+                Screen::About => todo!(),
             }
         });
     }
@@ -866,7 +867,7 @@ impl BallisticsApp {
             let mut to_delete = None;
             
             for (idx, calc) in self.calculation_history.iter().enumerate() {
-                ui.group(|ui| {
+                ui.group(|ui: &mut egui::Ui| {
                     ui.horizontal(|ui| {
                         ui.label(format!("📅 {}", calc.calculation.timestamp));
 
@@ -966,7 +967,7 @@ impl BallisticsApp {
                             ui.heading(&load.name);
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 if ui.button("Use in Analysis").clicked() {
-                                    self.apply_load_data(load);
+                                    self.apply_load_data(&load);
                                     self.current_screen = Screen::Analysis;
                                 }
                             });

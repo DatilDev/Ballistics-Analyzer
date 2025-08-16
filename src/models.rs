@@ -1,10 +1,9 @@
-// src/models.rs - Consolidated type definitions
+// src/models.rs - Shared type definitions
 use serde::{Deserialize, Serialize};
-use crate::ballistics::TrajectoryResult;
+use crate::ballistics::{TrajectoryResult, ProjectileData};
 use crate::hardware::{RangefinderData, WeatherData};
-use crate::ballistics::ProjectileData;
 
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AttachedImage {
     pub id: String,           // logical id or filename
     pub mime: String,         // "image/png", "image/jpeg"

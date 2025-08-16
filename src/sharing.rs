@@ -2,7 +2,7 @@ use nostr_sdk::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::auth;
-use crate::{SavedCalculation}; // Import from crate root, not models
+use crate::ballistics::models::SavedCalculation;
 
 #[derive(Default)]
 pub struct SharingManager {

@@ -8,13 +8,13 @@ pub mod hardware;
 pub mod load_data;
 pub mod firearm_profiles;
 pub mod sharing;
+pub mod models;  // Add the models module
 
 #[cfg(target_arch = "wasm32")]
 pub mod pwa;
 
-// Re-export main types from main.rs
-// Note: These types are defined in main.rs, not in separate modules
-// If you want to use them from lib, you should move them to a separate module
+// Re-export commonly used types from models
+pub use models::{AttachedImage, SavedCalculation, CalculationData};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;

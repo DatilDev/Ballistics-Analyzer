@@ -15,6 +15,7 @@ eframe = "0.28"
 egui = "0.28"
 egui_plot = "0.28"
 egui_extras = "0.28"
+ballistics_rs = "0.1.4"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
