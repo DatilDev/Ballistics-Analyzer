@@ -62,13 +62,13 @@ serialport = "4.5"
 # btleplug = "0.11"  # Uncomment if you want BLE support
 
 # Web-only dependencies
-[target.'cfg(target_arch = "wasm32"))'.dependencies]
+[target.'cfg(target_arch = "wasm32")'.dependencies]
 # WASM bindings
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 
 # Web APIs
-web-sys = { version = "0.3", features = [
+web-sys = { version = "0.3.77", features = [
     "Window",
     "Document",
     "Element",
@@ -85,7 +85,6 @@ web-sys = { version = "0.3", features = [
     "ServiceWorker",
     "ServiceWorkerContainer",
     "Storage",
-    "LocalStorage",
     "Location",
     "History",
     "MediaQueryList",
@@ -152,7 +151,7 @@ resolver = "2"
 default = ["desktop"]
 desktop = []
 web = []
-hardware = ["serialport"]
+hardware = []
 bluetooth = []  # Add "btleplug" to dependencies if enabling this
 debug-ui = []
 
