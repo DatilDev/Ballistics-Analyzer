@@ -26,6 +26,14 @@ use load_data::LoadDataLibrary;
 use sharing::SharingManager;
 use storage::LocalStorage;
 
+// Define AttachedImage locally
+#[derive(Clone)]
+pub struct AttachedImage {
+    pub id: String,
+    pub mime: String,
+    pub bytes: Vec<u8>,
+}
+
 #[derive(Default)]
 pub struct BallisticsApp {
     // Core managers
@@ -54,22 +62,13 @@ pub struct BallisticsApp {
 }
 
 #[derive(Default, Clone, Serialize, Deserialize)]
-struct CalculationData {
-    id: String,
-    projectile_data: ProjectileData,
-    notes: String,
-    weather_data: Option<WeatherData>,
-    range_data: Option<RangefinderData>,
-    timestamp: String,
-}
-
-#[derive(Clone)]
-pub struct AttachedImage {
+pub struct CalculationData {
     pub id: String,
-    pub name: String,
-    pub data: Vec<u8>,
-    #[cfg(not(target_arch = "wasm32"))]
-    pub thumbnail: Option<Vec<u8>>,
+    pub projectile_data: ProjectileData,
+    pub notes: String,
+    pub weather_data: Option<WeatherData>,
+    pub range_data: Option<RangefinderData>,
+    pub timestamp: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -80,7 +79,6 @@ pub struct SavedCalculation {
     pub profile_name: Option<String>,
     pub image_ids: Vec<String>,
 }
-
 
 #[derive(PartialEq, Default, Clone, Copy)]
 enum Screen {
@@ -121,8 +119,6 @@ fn main() -> eframe::Result<()> {
 
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    use wasm_bindgen::prelude::*;
-    
     console_error_panic_hook::set_once();
     tracing_wasm::set_as_global_default();
 
@@ -217,7 +213,36 @@ impl eframe::App for BallisticsApp {
             egui::SidePanel::right("hardware_panel")
                 .default_width(300.0)
                 .show(ctx, |ui| {
-                    self.show_hardware_panel_ui(ui);
+                    // Hardware panel UI implementation
+                    ui.heading("📡 Hardware");
+                    ui.separator();
+                    
+                    if self.hardware.rangefinder_connected() {
+                        ui.label("✅ Rangefinder connected");
+                        if let Some(data) = self.hardware.get_rangefinder_data() {
+                            ui.label(format!("Distance: {} yards", data.distance));
+                            ui.label(format!("Angle: {}°", data.angle));
+                        }
+                    } else {
+                        if ui.button("Connect Rangefinder").clicked() {
+                            self.hardware.connect_rangefinder();
+                        }
+                    }
+                    
+                    ui.separator();
+                    
+                    if self.hardware.weather_meter_connected() {
+                        ui.label("✅ Weather meter connected");
+                        if let Some(data) = self.hardware.get_weather_data() {
+                            ui.label(format!("Temp: {}°F", data.temperature));
+                            ui.label(format!("Pressure: {} inHg", data.pressure));
+                            ui.label(format!("Humidity: {}%", data.humidity));
+                        }
+                    } else {
+                        if ui.button("Connect Weather Meter").clicked() {
+                            self.hardware.connect_weather_meter();
+                        }
+                    }
                 });
         }
 
@@ -381,7 +406,10 @@ impl BallisticsApp {
                 ui.heading("Recent Calculations");
                 ui.add_space(10.0);
 
-                for calc in self.calculation_history.iter().take(3) {
+                // Fix borrow issue - clone the needed data
+                let recent_calcs: Vec<_> = self.calculation_history.iter().take(3).cloned().collect();
+                
+                for calc in recent_calcs {
                     ui.group(|ui| {
                         ui.horizontal(|ui| {
                             ui.label(&calc.calculation.timestamp);
@@ -394,7 +422,7 @@ impl BallisticsApp {
                             ));
 
                             if ui.button("Load").clicked() {
-                                self.load_calculation(calc);
+                                self.load_calculation(&calc);
                                 self.current_screen = Screen::Analysis;
                             }
                         });
@@ -427,34 +455,43 @@ impl BallisticsApp {
 
         ui.horizontal(|ui| {
             ui.label("Firearm Profile:");
+            
+            // Fix borrow issue - collect profile data
+            let profile_names: Vec<_> = self.firearm_profiles.iter()
+                .enumerate()
+                .map(|(i, p)| (i, p.name.clone()))
+                .collect();
+            
+            let selected_text = self.selected_profile
+                .and_then(|i| self.firearm_profiles.get(i))
+                .map(|p| p.name.clone())
+                .unwrap_or_else(|| "None Selected".to_string());
+            
+            let mut selected_idx = self.selected_profile;
+            
             egui::ComboBox::from_label("")
-                .selected_text(
-                    self.selected_profile
-                        .and_then(|i| self.firearm_profiles.get(i))
-                        .map(|p| p.name.as_str())
-                        .unwrap_or("None Selected"),
-                )
+                .selected_text(selected_text)
                 .show_ui(ui, |ui| {
-                    if ui
-                        .selectable_label(self.selected_profile.is_none(), "None")
-                        .clicked()
-                    {
-                        self.selected_profile = None;
+                    if ui.selectable_label(selected_idx.is_none(), "None").clicked() {
+                        selected_idx = None;
                     }
 
                     ui.separator();
 
-                    for (i, profile) in self.firearm_profiles.iter().enumerate() {
-                        let label = format!("{} - {} {}", profile.name, profile.manufacturer, profile.model);
-                        if ui
-                            .selectable_label(self.selected_profile == Some(i), label)
-                            .clicked()
-                        {
-                            self.selected_profile = Some(i);
-                            self.apply_profile(i);
+                    for (i, name) in profile_names {
+                        if ui.selectable_label(selected_idx == Some(i), &name).clicked() {
+                            selected_idx = Some(i);
                         }
                     }
                 });
+            
+            // Apply selection changes after combo box
+            if selected_idx != self.selected_profile {
+                self.selected_profile = selected_idx;
+                if let Some(i) = selected_idx {
+                    self.apply_profile(i);
+                }
+            }
 
             ui.separator();
 
@@ -533,7 +570,7 @@ impl BallisticsApp {
                             ui.add(
                                 egui::DragValue::new(&mut self.current_calculation.projectile_data.bc)
                                     .speed(0.001)
-                                    .clamp_range(0.1..=2.0),
+                                    .range(0.1..=2.0),
                             );
                         });
                         ui.horizontal(|ui| {
@@ -596,7 +633,7 @@ impl BallisticsApp {
                                 egui::DragValue::new(&mut self.current_calculation.projectile_data.humidity)
                                     .speed(1.0)
                                     .suffix(" %")
-                                    .clamp_range(0.0..=100.0),
+                                    .range(0.0..=100.0),
                             );
                         });
                     });
@@ -616,7 +653,7 @@ impl BallisticsApp {
                                 egui::DragValue::new(&mut self.current_calculation.projectile_data.wind_angle)
                                     .speed(1.0)
                                     .suffix(" °")
-                                    .clamp_range(0.0..=360.0),
+                                    .range(0.0..=360.0),
                             );
                         });
                         ui.horizontal(|ui| {
@@ -652,11 +689,11 @@ impl BallisticsApp {
                     ui.add_space(10.0);
                     ui.horizontal_wrapped(|ui| {
                         let mut to_remove = None;
-                        for (i, img) in self.attached_images.iter().enumerate() {
+                        for (i, _img) in self.attached_images.iter().enumerate() {
                             ui.group(|ui| {
                                 ui.vertical(|ui| {
                                     ui.label("📷");
-                                    ui.label(&img.name);
+                                    ui.label(format!("Image {}", i + 1));
                                     if ui.small_button("❌").clicked() {
                                         to_remove = Some(i);
                                     }
@@ -671,7 +708,6 @@ impl BallisticsApp {
             });
     }
 
-    // ... Additional methods remain the same but with fixed imports and proper error handling
     fn show_profiles_screen(&mut self, ui: &mut egui::Ui) {
         ui.heading("🔫 Firearm Profiles");
 
@@ -695,8 +731,13 @@ impl BallisticsApp {
 
         egui::ScrollArea::vertical().show(ui, |ui| {
             let mut to_remove: Option<usize> = None;
+            let mut to_duplicate: Option<usize> = None;
 
-            for (i, profile) in self.firearm_profiles.iter_mut().enumerate() {
+            // Create a list of indices to iterate over
+            let indices: Vec<usize> = (0..self.firearm_profiles.len()).collect();
+            
+            for i in indices {
+                let profile = &mut self.firearm_profiles[i];
                 ui.push_id(i, |ui| {
                     ui.group(|ui| {
                         ui.horizontal(|ui| {
@@ -706,7 +747,7 @@ impl BallisticsApp {
                                     to_remove = Some(i);
                                 }
                                 if ui.button("📋").clicked() {
-                                    self.duplicate_profile(i);
+                                    to_duplicate = Some(i);
                                 }
                             });
                         });
@@ -788,6 +829,11 @@ impl BallisticsApp {
                 ui.add_space(10.0);
             }
 
+            // Handle actions after iteration
+            if let Some(i) = to_duplicate {
+                self.duplicate_profile(i);
+            }
+            
             if let Some(i) = to_remove {
                 self.firearm_profiles.remove(i);
                 if self.selected_profile == Some(i) {
@@ -1031,12 +1077,105 @@ impl BallisticsApp {
         ui.heading("⚙️ Settings");
         ui.separator();
 
-        ui.group(|ui| {
-            ui.label("Display Settings:");
-            ui.checkbox(&mut self.settings.dark_mode, "Dark Mode");
-            ui.checkbox(&mut self.settings.show_tooltips, "Show Tooltips");
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            // Display Settings
+            ui.group(|ui| {
+                ui.heading("🎨 Display");
+                ui.checkbox(&mut self.settings.dark_mode, "Dark Mode");
+                ui.checkbox(&mut self.settings.show_tooltips, "Show Tooltips");
+                
+                ui.horizontal(|ui| {
+                    ui.label("Font Size:");
+                    ui.add(egui::Slider::new(&mut self.settings.font_size, 10.0..=20.0));
+                });
+            });
+
+            ui.add_space(10.0);
+
+            // Units Settings
+            ui.group(|ui| {
+                ui.heading("📏 Units");
+                
+                ui.horizontal(|ui| {
+                    ui.label("Distance:");
+                    egui::ComboBox::from_label("")
+                        .selected_text(format!("{:?}", self.settings.distance_unit))
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(&mut self.settings.distance_unit, DistanceUnit::Yards, "Yards");
+                            ui.selectable_value(&mut self.settings.distance_unit, DistanceUnit::Meters, "Meters");
+                        });
+                });
+                
+                ui.horizontal(|ui| {
+                    ui.label("Temperature:");
+                    egui::ComboBox::from_label("")
+                        .selected_text(format!("{:?}", self.settings.temp_unit))
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(&mut self.settings.temp_unit, TempUnit::Fahrenheit, "Fahrenheit");
+                            ui.selectable_value(&mut self.settings.temp_unit, TempUnit::Celsius, "Celsius");
+                        });
+                });
+            });
+
+            ui.add_space(10.0);
+
+            // Calculation Settings
+            ui.group(|ui| {
+                ui.heading("🧮 Calculations");
+                ui.checkbox(&mut self.settings.auto_save, "Auto-save calculations");
+                ui.checkbox(&mut self.settings.include_coriolis, "Include Coriolis effect");
+            });
+
+            ui.add_space(10.0);
+
+            // Data Management
+            ui.group(|ui| {
+                ui.heading("💾 Data Management");
+                
+                ui.horizontal(|ui| {
+                    if ui.button("📤 Export All Data").clicked() {
+                        self.export_all_data();
+                    }
+                    if ui.button("📥 Import Data").clicked() {
+                        self.import_data();
+                    }
+                });
+                
+                ui.separator();
+                
+                ui.horizontal(|ui| {
+                    if ui.button("🗑️ Clear All Data").clicked() {
+                        self.confirm_clear_data = true;
+                    }
+                });
+                
+                if self.confirm_clear_data {
+                    ui.separator();
+                    ui.colored_label(egui::Color32::RED, "⚠️ This will delete all your data!");
+                    ui.horizontal(|ui| {
+                        if ui.button("✅ Confirm Delete").clicked() {
+                            self.clear_all_data();
+                            self.confirm_clear_data = false;
+                        }
+                        if ui.button("❌ Cancel").clicked() {
+                            self.confirm_clear_data = false;
+                        }
+                    });
+                }
+            });
+
+            ui.add_space(10.0);
+
+            // About section link
+            ui.group(|ui| {
+                ui.heading("ℹ️ Information");
+                if ui.button("📖 About Ballistics Analyzer").clicked() {
+                    self.current_screen = Screen::About;
+                }
+            });
         });
     }
+
 
     fn show_trajectory_results(&self, ui: &mut egui::Ui, results: &TrajectoryResult) {
         ui.heading("📈 Trajectory Results");
@@ -1228,32 +1367,16 @@ impl BallisticsApp {
     fn load_image_from_path(&mut self, path: std::path::PathBuf) {
         if let Ok(data) = std::fs::read(&path) {
             let id = Uuid::new_v4().to_string();
-            let name = path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("image")
-                .to_string();
-
-            let thumbnail = if let Ok(img) = image::load_from_memory(&data) {
-                let thumb = img.thumbnail(100, 100);
-                let mut buf = Vec::new();
-                if thumb
-                    .write_to(&mut std::io::Cursor::new(&mut buf), image::ImageFormat::Png)
-                    .is_ok()
-                {
-                    RetainedImage::from_image_bytes(&id, &buf).ok()
-                } else {
-                    None
-                }
-            } else {
-                None
-            };
+            let mime = match path.extension().and_then(|e| e.to_str()) {
+                Some("png") => "image/png",
+                Some("jpg") | Some("jpeg") => "image/jpeg",
+                _ => "image/unknown",
+            }.to_string();
 
             self.attached_images.push(AttachedImage {
                 id,
-                name,
-                data,
-                thumbnail,
+                mime,
+                bytes: data,
             });
         }
     }
@@ -1355,14 +1478,18 @@ impl BallisticsApp {
 
                 ui.separator();
 
-                if let Some(loads) = self
-                    .load_library
+                // Clone loads to avoid borrow issues
+                let loads = self.load_library
                     .get_loads_for_manufacturer(&self.load_library.selected_manufacturer)
-                {
+                    .cloned()
+                    .unwrap_or_default();
+
+                if !loads.is_empty() {
                     egui::ScrollArea::vertical()
                         .max_height(300.0)
                         .show(ui, |ui| {
-                            for load in loads {
+                            for load in &loads {
+                                let load_clone = load.clone();
                                 ui.group(|ui| {
                                     ui.label(&load.name);
                                     ui.label(format!(
@@ -1370,7 +1497,7 @@ impl BallisticsApp {
                                         load.bullet_weight, load.velocity
                                     ));
                                     if ui.button("Use").clicked() {
-                                        self.apply_load_data(load);
+                                        self.apply_load_data(&load_clone);
                                         self.show_load_library = false;
                                     }
                                 });
@@ -1514,6 +1641,7 @@ impl BallisticsApp {
     }
 }
 
+
 // Settings struct
 #[derive(Default, Clone, Serialize, Deserialize)]
 struct Settings {
@@ -1526,21 +1654,35 @@ struct Settings {
     include_coriolis: bool,
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
 enum DistanceUnit {
     #[default]
     Yards,
     Meters,
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
 enum TempUnit {
     #[default]
     Fahrenheit,
     Celsius,
 }
 
-// Font setup
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            dark_mode: true,
+            show_tooltips: true,
+            font_size: 14.0,
+            distance_unit: DistanceUnit::Yards,
+            temp_unit: TempUnit::Fahrenheit,
+            auto_save: true,
+            include_coriolis: false,
+        }
+    }
+}
+//Font Setup
 fn setup_custom_fonts(ctx: &egui::Context) {
     let mut fonts = egui::FontDefinitions::default();
 
@@ -1558,7 +1700,6 @@ fn setup_custom_fonts(ctx: &egui::Context) {
 
     ctx.set_fonts(fonts);
 }
-
 // Platform-specific helpers for web
 #[cfg(target_arch = "wasm32")]
 mod web_helpers {
@@ -1578,5 +1719,4 @@ mod web_helpers {
                 });
             }
         }
-    }
-}
+    }}

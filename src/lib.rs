@@ -1,6 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-pub mod app;
 pub mod auth;
 pub mod ballistics;
 pub mod storage;
@@ -13,8 +12,9 @@ pub mod sharing;
 #[cfg(target_arch = "wasm32")]
 pub mod pwa;
 
-// Re-export types from app module
-pub use app::{AttachedImage, BallisticsApp, SavedCalculation};
+// Re-export main types from main.rs
+// Note: These types are defined in main.rs, not in separate modules
+// If you want to use them from lib, you should move them to a separate module
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
