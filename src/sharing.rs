@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::auth;
 use crate::app::{AttachedImage, SavedCalculation}; // adjust if your paths differ
+use crate::models::{AttachedImage, SavedCalculation};
 
 #[derive(Default)]
 pub struct SharingManager {
@@ -37,10 +38,10 @@ impl SharingManager {
             Kind::from(30078), // custom kind for ballistics data
             content,
             &[
-                Tag::Hashtag("ballistics".to_string()),
-                Tag::Hashtag("shooting".to_string()),
-                Tag::Generic(
-                    TagKind::Custom("caliber".to_string()),
+                Tag::Hashtag("ballistics"),
+                Tag::Hashtag("shooting"),
+                Tag::custom(
+                    "caliber",
                     vec![calculation.calculation.projectile_data.caliber.clone()],
                 ),
             ],

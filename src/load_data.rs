@@ -13,7 +13,6 @@ pub struct LoadData {
     pub powder_charge: f64,
 }
 
-#[derive(Default)]
 pub struct LoadDataLibrary {
     pub selected_manufacturer: String,
     loads: HashMap<String, Vec<LoadData>>,

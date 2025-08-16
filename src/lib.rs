@@ -12,6 +12,7 @@ pub mod sharing;
 pub mod pwa;
 
 pub use app::BallisticsApp;
+pub use app::{AttachedImage, SavedCalculation};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;

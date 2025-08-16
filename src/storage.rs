@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::app::{AttachedImage, SavedCalculation};
 use crate::firearm_profiles::FirearmProfile;
+use crate::models::{AttachedImage, SavedCalculation};
 
 #[derive(Default)]
 pub struct LocalStorage {

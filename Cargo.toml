@@ -1,96 +1,180 @@
 [package]
 name = "ballistics-analyzer"
-version = "0.3.0"
+version = "1.0.0"
 edition = "2021"
-authors = ["Ballistics Analyzer Team"]
+authors = ["Ballistics Analyzer Contributors"]
 description = "Professional ballistics calculator with hardware integration"
-repository = "https://github.com/ballistics-analyzer/ballistics-analyzer"
 license = "MIT"
-keywords = ["ballistics", "shooting", "trajectory", "calculator", "nostr"]
+repository = "https://github.com/ballistics-analyzer/ballistics-analyzer"
+keywords = ["ballistics", "trajectory", "shooting", "calculator", "nostr"]
+categories = ["science", "simulation"]
 
 [dependencies]
-# Core dependencies
-tokio = { version = "1.35", features = ["full"] }
+# Core GUI framework
+eframe = "0.28"
+egui = "0.28"
+egui_plot = "0.28"
+egui_extras = "0.28"
+
+# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-chrono = { version = "0.4", features = ["serde", "wasmbind"] }
-uuid = { version = "1.6", features = ["v4", "serde", "js"] }
-getrandom = { version = "0.2", features = ["js"] }
 
-# GUI framework with web support
-egui = "0.24"
-eframe = { version = "0.24", default-features = false, features = ["default_fonts", "web", "persistence"] }
-egui_extras = { version = "0.24", features = ["image"] }
-image = { version = "0.24", features = ["jpeg", "png"] }
+# Utilities
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
+rand = "0.8"
+anyhow = "1.0"
+thiserror = "1.0"
+base64 = "0.22"
 
-# Web-specific dependencies
-[target.'cfg(target_arch = "wasm32")'.dependencies]
+# Async runtime (needed for some features)
+futures = "0.3"
+
+# Desktop-only dependencies
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# Logging
+env_logger = "0.11"
+tracing = "0.1"
+
+# File system and database
+rusqlite = { version = "0.32", features = ["bundled"] }
+rfd = "0.14"  # File dialogs
+dirs = "5.0"  # Platform-specific directories
+
+# Nostr protocol
+nostr-sdk = "0.35"
+
+# Async runtime for desktop
+tokio = { version = "1.40", features = ["full"] }
+tokio-tungstenite = "0.24"
+
+# Image processing
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+
+# Clipboard support
+arboard = "3.4"
+
+# Serial port communication (for hardware)
+serialport = "4.5"
+
+# Bluetooth support (optional, for rangefinders)
+# btleplug = "0.11"  # Uncomment if you want BLE support
+
+# Web-only dependencies
+[target.'cfg(target_arch = "wasm32"))'.dependencies]
+# WASM bindings
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
+
+# Web APIs
 web-sys = { version = "0.3", features = [
     "Window",
     "Document",
     "Element",
-    "Storage",
-    "Navigator",
-    "ServiceWorker",
-    "ServiceWorkerContainer",
-    "ServiceWorkerRegistration",
-    "Notification",
-    "NotificationPermission",
-    "Bluetooth",
-    "BluetoothDevice",
-    "BluetoothRemoteGATTService",
-    "Serial",
-    "SerialPort",
+    "HtmlElement",
+    "HtmlCanvasElement",
+    "HtmlInputElement",
     "File",
+    "FileList",
     "FileReader",
     "Blob",
     "BlobPropertyBag",
     "Url",
-    "HtmlCanvasElement",
-    "CanvasRenderingContext2d",
+    "Navigator",
+    "ServiceWorker",
+    "ServiceWorkerContainer",
+    "Storage",
+    "LocalStorage",
+    "Location",
+    "History",
+    "MediaQueryList",
+    "Clipboard",
+    "console",
 ] }
-js-sys = "0.3"
+
+# Error handling and logging for WASM
 console_error_panic_hook = "0.1"
 tracing-wasm = "0.2"
 
-# Native dependencies
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rfd = "0.12"
-serialport = "4.3"
-btleplug = "0.11"
-rusqlite = { version = "0.30", features = ["bundled", "blob"] }
-
-# Shared dependencies with platform-specific features
-nostr-sdk = { version = "0.27", default-features = false, features = ["nip07"] }
-base64 = "0.21"
-aes-gcm = "0.10"
-argon2 = "0.5"
-nalgebra = "0.32"
-reqwest = { version = "0.11", features = ["json"] }
+# JSON parsing in WASM
+getrandom = { version = "0.2", features = ["js"] }
 
 # Development dependencies
 [dev-dependencies]
-wasm-bindgen-test = "0.3"
+criterion = "0.5"
+pretty_assertions = "1.4"
+tempfile = "3.12"
 
-# Build configuration for different targets
+# Build dependencies
+[build-dependencies]
+# Add if you need build scripts
+
+# Profile configurations
+[profile.dev]
+opt-level = 0
+debug = true
+
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
 strip = true
 
+[profile.wasm]
+inherits = "release"
+opt-level = "z"  # Optimize for size
+lto = true
+panic = "abort"
+
+# Web-specific profile
 [profile.wasm-release]
 inherits = "release"
-opt-level = "s"
+opt-level = "z"
+lto = "fat"
+panic = "abort"
 
-# Platform-specific features
-[features]
-default = ["native"]
-native = ["eframe/default"]
-web = ["eframe/web"]
-
-# Required for PWA
+# Package metadata for WASM
 [package.metadata.wasm-pack]
-wasm-opt = ["-Os"]
+"wasm-opt" = ["-Oz", "--enable-simd"]
+
+# Workspace configuration (if you plan to have multiple crates)
+[workspace]
+members = ["."]
+resolver = "2"
+
+# Patch dependencies if needed
+[patch.crates-io]
+# Example: nostr-sdk = { git = "https://github.com/rust-nostr/nostr", branch = "master" }
+
+# Features (optional - for conditional compilation)
+[features]
+default = ["desktop"]
+desktop = []
+web = []
+hardware = ["serialport"]
+bluetooth = []  # Add "btleplug" to dependencies if enabling this
+debug-ui = []
+
+# Library configuration
+[lib]
+name = "ballistics_analyzer"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+# Binary configuration
+[[bin]]
+name = "ballistics-analyzer"
+path = "src/main.rs"
+required-features = ["desktop"]
+
+# Example configurations (if you have examples)
+[[example]]
+name = "trajectory_calculation"
+path = "examples/trajectory.rs"
+
+# Benchmark configurations (if you have benchmarks)
+[[bench]]
+name = "ballistics_bench"
+harness = false
+path = "benches/ballistics.rs"

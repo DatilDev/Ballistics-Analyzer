@@ -30,12 +30,13 @@ impl NostrAuth {
     }
 
     pub fn import_key(&mut self, key: &str) -> bool {
-        // Try nsec or hex
+        // Accept bech32 nsec or hex-encoded secret key
         let parsed = if key.starts_with("nsec") {
-            Keys::from_str(key)
+            // bech32
+            Keys::parse(key)
         } else {
-            // assume hex secret
-            SecretKey::from_str(key).map(|sk| Keys::new(sk))
+            // hex secret
+            SecretKey::parse(key).map(Keys::new)
         };
 
         match parsed {
@@ -102,7 +103,7 @@ impl NostrAuth {
             if let Some(ep) = v.get("amber_endpoint").and_then(|x| x.as_str()) {
                 self.amber_endpoint = ep.to_string();
             }
-            // You likely cannot restore secret keys from storage securely; skip.
+            // Do not restore secret keys from storage here for security.
         }
     }
 
