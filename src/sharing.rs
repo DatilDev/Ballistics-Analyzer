@@ -2,8 +2,7 @@ use nostr_sdk::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::auth;
-use crate::app::{AttachedImage, SavedCalculation}; // adjust if your paths differ
-use crate::models::{AttachedImage, SavedCalculation};
+use crate::{SavedCalculation}; // Import from crate root, not models
 
 #[derive(Default)]
 pub struct SharingManager {
@@ -34,17 +33,23 @@ impl SharingManager {
         // Build content (you may want to conditionally strip fields based on include_* flags)
         let content = serde_json::to_string(calculation).ok()?;
 
+        let mut tags = vec![
+            Tag::hashtag("ballistics"), // Use Tag::hashtag instead of Tag::Hashtag
+            Tag::hashtag("shooting"),
+        ];
+        
+        // Add caliber tag if parsing succeeds
+        if let Ok(caliber_tag) = Tag::parse(&[
+            "caliber".to_string(),
+            calculation.calculation.projectile_data.caliber.clone(),
+        ]) {
+            tags.push(caliber_tag);
+        }
+
         let event = EventBuilder::new(
-            Kind::from(30078), // custom kind for ballistics data
+            Kind::Custom(30078), // Use Kind::Custom instead of Kind::from
             content,
-            &[
-                Tag::Hashtag("ballistics"),
-                Tag::Hashtag("shooting"),
-                Tag::custom(
-                    "caliber",
-                    vec![calculation.calculation.projectile_data.caliber.clone()],
-                ),
-            ],
+            tags, // Use Vec<Tag> instead of &[Tag; 3]
         )
         .to_event(keys)
         .ok()?;

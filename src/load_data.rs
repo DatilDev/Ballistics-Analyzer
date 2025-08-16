@@ -94,7 +94,7 @@ impl LoadDataLibrary {
         self.loads.keys().cloned().collect()
     }
 
-    pub fn get_loads_for_manufacturer(&self, manufacturer: &str) -> Option<&Vec<LoadData>> {
-        self.loads.get(manufacturer)
+    pub fn get_loads_for_manufacturer(&self, manufacturer: &str) -> Option<Vec<LoadData>> {
+        self.loads.get(manufacturer).cloned()
     }
 }
