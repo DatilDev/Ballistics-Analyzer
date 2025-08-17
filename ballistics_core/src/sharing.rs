@@ -30,7 +30,7 @@ impl SharingManager {
         }
         
         // Serialize calculation
-        let content = serde_json::to_string(calculation)?;
+        let _content = serde_json::to_string(calculation)?;
         
         // Create nostr event
         let event_id = uuid::Uuid::new_v4().to_string();

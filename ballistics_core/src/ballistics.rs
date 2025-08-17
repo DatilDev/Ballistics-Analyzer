@@ -1,5 +1,4 @@
 use crate::models::{CalculationData, TrajectoryPoint};
-use std::f64::consts::PI;
 
 pub struct BallisticsCalculator;
 
@@ -24,7 +23,7 @@ impl BallisticsCalculator {
         
         // Calculate trajectory points
         let mut current_distance = 0.0;
-        let mut max_ordinate = 0.0;
+        let mut max_ordinate: f64 = 0.0;  // Fixed: Use f64 throughout
         
         while current_distance <= max_distance {
             let point = Self::calculate_point(
@@ -33,6 +32,7 @@ impl BallisticsCalculator {
                 corrected_bc,
             );
             
+            // Fixed: Both values are now f64
             if point.drop.abs() > max_ordinate.abs() {
                 max_ordinate = point.drop;
             }
@@ -49,11 +49,16 @@ impl BallisticsCalculator {
     fn calculate_point(
         data: &CalculationData,
         distance: f64,
-        corrected_bc: f64,
+        _corrected_bc: f64,
     ) -> TrajectoryPoint {
         // Simplified ballistic calculation
-        let time_of_flight = distance / data.muzzle_velocity;
-        let velocity = data.muzzle_velocity - (distance * 0.5); // Simplified
+        let time_of_flight = if data.muzzle_velocity > 0.0 {
+            distance / data.muzzle_velocity
+        } else {
+            0.0
+        };
+        
+        let velocity = (data.muzzle_velocity - (distance * 0.5)).max(0.0); // Ensure non-negative
         
         // Drop calculation (simplified)
         let drop = if distance == 0.0 {
@@ -79,7 +84,11 @@ impl BallisticsCalculator {
         let windage_mil = Self::inches_to_mil(wind_drift, distance);
         
         // Energy calculation
-        let energy = 0.5 * (data.bullet_weight / 7000.0) * velocity.powi(2) / Self::GRAVITY;
+        let energy = if data.bullet_weight > 0.0 && velocity > 0.0 {
+            0.5 * (data.bullet_weight / 7000.0) * velocity.powi(2) / Self::GRAVITY
+        } else {
+            0.0
+        };
         
         TrajectoryPoint {
             distance,
@@ -96,8 +105,12 @@ impl BallisticsCalculator {
     }
     
     fn calculate_drop_at_zero(data: &CalculationData) -> f64 {
-        let time = data.zero_range / data.muzzle_velocity;
-        0.5 * Self::GRAVITY * time.powi(2) * 12.0
+        if data.muzzle_velocity > 0.0 {
+            let time = data.zero_range / data.muzzle_velocity;
+            0.5 * Self::GRAVITY * time.powi(2) * 12.0
+        } else {
+            0.0
+        }
     }
     
     fn calculate_density_correction(
@@ -109,13 +122,16 @@ impl BallisticsCalculator {
         // Standard conditions
         let std_temp = 59.0;
         let std_pressure = 29.92;
-        let std_humidity = 0.0;
         
         // Temperature correction
         let temp_ratio = (459.67 + std_temp) / (459.67 + temperature);
         
         // Pressure correction
-        let pressure_ratio = pressure / std_pressure;
+        let pressure_ratio = if std_pressure > 0.0 {
+            pressure / std_pressure
+        } else {
+            1.0
+        };
         
         // Humidity correction (simplified)
         let humidity_factor = 1.0 - (humidity * 0.001);
@@ -126,27 +142,31 @@ impl BallisticsCalculator {
         temp_ratio * pressure_ratio * humidity_factor * altitude_factor
     }
     
-    fn calculate_max_range(data: &CalculationData, corrected_bc: f64) -> f64 {
+    fn calculate_max_range(data: &CalculationData, _corrected_bc: f64) -> f64 {
         // Simplified max range calculation
-        let launch_angle = 35.0_f64.to_radians(); // Optimal angle (simplified)
-        let v0 = data.muzzle_velocity;
-        
-        (v0.powi(2) * (2.0 * launch_angle).sin()) / Self::GRAVITY
+        if data.muzzle_velocity > 0.0 {
+            let launch_angle = 35.0_f64.to_radians(); // Optimal angle (simplified)
+            let v0 = data.muzzle_velocity;
+            
+            (v0.powi(2) * (2.0 * launch_angle).sin()) / Self::GRAVITY
+        } else {
+            0.0
+        }
     }
     
     fn inches_to_moa(inches: f64, distance_yards: f64) -> f64 {
-        if distance_yards == 0.0 {
-            0.0
-        } else {
+        if distance_yards > 0.0 {
             (inches / distance_yards) * 95.49
+        } else {
+            0.0
         }
     }
     
     fn inches_to_mil(inches: f64, distance_yards: f64) -> f64 {
-        if distance_yards == 0.0 {
-            0.0
-        } else {
+        if distance_yards > 0.0 {
             (inches / distance_yards) * 27.78
+        } else {
+            0.0
         }
     }
     
@@ -154,33 +174,51 @@ impl BallisticsCalculator {
         data: &CalculationData,
         distance: f64,
     ) -> f64 {
-        // Miller's formula for spin drift
-        let sg = Self::calculate_stability(data);
-        let time = distance / data.muzzle_velocity;
-        
-        1.25 * (sg + 1.2) * time.powi(2)
+        if data.muzzle_velocity > 0.0 {
+            // Miller's formula for spin drift
+            let sg = Self::calculate_stability(data);
+            let time = distance / data.muzzle_velocity;
+            
+            1.25 * (sg + 1.2) * time.powi(2)
+        } else {
+            0.0
+        }
     }
     
     pub fn calculate_stability(data: &CalculationData) -> f64 {
         // Greenhill formula
-        let twist_calibers = data.barrel_twist / data.caliber.parse::<f64>().unwrap_or(0.308);
-        let length_calibers = data.bullet_length / data.caliber.parse::<f64>().unwrap_or(0.308);
+        let caliber_value = data.caliber.parse::<f64>().unwrap_or(0.308);
         
-        30.0 / (twist_calibers / length_calibers)
+        if caliber_value > 0.0 && data.barrel_twist > 0.0 && data.bullet_length > 0.0 {
+            let twist_calibers = data.barrel_twist / caliber_value;
+            let length_calibers = data.bullet_length / caliber_value;
+            
+            if length_calibers > 0.0 {
+                30.0 / (twist_calibers / length_calibers)
+            } else {
+                1.0
+            }
+        } else {
+            1.0
+        }
     }
     
     pub fn calculate_coriolis(
         data: &CalculationData,
         distance: f64,
     ) -> (f64, f64) {
-        let omega = 7.292e-5; // Earth's rotation rate (rad/s)
-        let time = distance / data.muzzle_velocity;
-        let lat_rad = data.latitude.to_radians();
-        let az_rad = data.azimuth.to_radians();
-        
-        let horizontal = 2.0 * omega * time * distance * lat_rad.sin() * az_rad.sin();
-        let vertical = 2.0 * omega * time * distance * lat_rad.cos();
-        
-        (horizontal, vertical)
+        if data.muzzle_velocity > 0.0 {
+            let omega = 7.292e-5; // Earth's rotation rate (rad/s)
+            let time = distance / data.muzzle_velocity;
+            let lat_rad = data.latitude.to_radians();
+            let az_rad = data.azimuth.to_radians();
+            
+            let horizontal = 2.0 * omega * time * distance * lat_rad.sin() * az_rad.sin();
+            let vertical = 2.0 * omega * time * distance * lat_rad.cos();
+            
+            (horizontal, vertical)
+        } else {
+            (0.0, 0.0)
+        }
     }
 }

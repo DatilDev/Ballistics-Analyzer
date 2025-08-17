@@ -6,14 +6,21 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-ballistics-core = { path = "../ballistics-core", features = ["gui", "storage", "nostr"] }
+ballistics_core = { path = "../ballistics_core", features = ["gui", "storage"] }
 
 # GUI framework
 egui = { workspace = true }
 egui_extras = { workspace = true }
+egui_plot = { workspace = true }
 
 # Mobile framework
-eframe = { workspace = true, default-features = false, features = ["glow"] }
+eframe = { workspace = true, features = ["glow"] }
+
+# Core dependencies
+uuid = { workspace = true }
+chrono = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
 
 # Database
 rusqlite = { workspace = true }

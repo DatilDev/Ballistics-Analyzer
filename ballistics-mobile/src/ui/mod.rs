@@ -4,7 +4,7 @@ mod profile_view;
 mod settings_view;
 
 use crate::app::{MobileApp, ViewType};
-use egui::{Context, ScrollArea, TopBottomPanel, CentralPanel, Button, Layout, Align};
+use egui::{Context, ScrollArea, TopBottomPanel, CentralPanel, Layout, Align};
 
 pub fn render_mobile_ui(app: &mut MobileApp, ctx: &Context) {
     // Top navigation bar

@@ -40,16 +40,13 @@ pub fn render(app: &mut MobileApp, ui: &mut Ui) {
                         app.profile_manager.select_profile(None);
                     }
                     
-                    let profiles = app.profile_manager.profiles.clone();
-                    for profile in &profiles {
-                        let profile_id = profile.id.clone();
-                        let profile_name = profile.name.clone();
+                    for profile in &app.profile_manager.profiles {
                         if ui.selectable_label(
-                            app.profile_manager.selected_profile_id == Some(profile_id.clone()),
-                            &profile_name
+                            app.profile_manager.selected_profile_id == Some(profile.id.clone()),
+                            &profile.name
                         ).clicked() {
-                            app.profile_manager.select_profile(Some(profile_id.clone()));
-                            apply_profile_to_calculation(app, &profile_id);
+                            app.profile_manager.select_profile(Some(profile.id.clone()));
+                            apply_profile_to_calculation(app, &profile.id);
                         }
                     }
                 });

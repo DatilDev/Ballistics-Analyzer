@@ -1,5 +1,6 @@
 use crate::models::{SavedCalculation, FirearmProfile};
 use anyhow::Result;
+use std::sync::{Arc, Mutex};
 
 #[cfg(not(target_arch = "wasm32"))]
 use rusqlite::{Connection, params};
@@ -19,7 +20,7 @@ pub trait StorageBackend: Send + Sync {
 // Default implementation for desktop platforms
 #[cfg(not(target_arch = "wasm32"))]
 pub struct SqliteStorage {
-    conn: Connection,
+    conn: Arc<Mutex<Connection>>,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -49,7 +50,9 @@ impl SqliteStorage {
             [],
         )?;
         
-        Ok(Self { conn })
+        Ok(Self { 
+            conn: Arc::new(Mutex::new(conn))
+        })
     }
 }
 
@@ -57,8 +60,9 @@ impl SqliteStorage {
 impl StorageBackend for SqliteStorage {
     fn save_calculation(&mut self, calc: &SavedCalculation) -> Result<()> {
         let data = serde_json::to_string(calc)?;
+        let conn = self.conn.lock().unwrap();
         
-        self.conn.execute(
+        conn.execute(
             "INSERT OR REPLACE INTO calculations (id, timestamp, name, data, notes, firearm_profile_id) 
              VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             params![
@@ -75,7 +79,8 @@ impl StorageBackend for SqliteStorage {
     }
     
     fn load_calculation(&self, id: &str) -> Result<SavedCalculation> {
-        let data: String = self.conn.query_row(
+        let conn = self.conn.lock().unwrap();
+        let data: String = conn.query_row(
             "SELECT data FROM calculations WHERE id = ?1",
             params![id],
             |row| row.get(0),
@@ -85,7 +90,8 @@ impl StorageBackend for SqliteStorage {
     }
     
     fn list_calculations(&self) -> Result<Vec<SavedCalculation>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT data FROM calculations ORDER BY timestamp DESC"
         )?;
         
@@ -100,7 +106,8 @@ impl StorageBackend for SqliteStorage {
     }
     
     fn delete_calculation(&mut self, id: &str) -> Result<()> {
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "DELETE FROM calculations WHERE id = ?1",
             params![id],
         )?;
@@ -109,8 +116,9 @@ impl StorageBackend for SqliteStorage {
     
     fn save_profile(&mut self, profile: &FirearmProfile) -> Result<()> {
         let data = serde_json::to_string(profile)?;
+        let conn = self.conn.lock().unwrap();
         
-        self.conn.execute(
+        conn.execute(
             "INSERT OR REPLACE INTO firearm_profiles (id, name, data) VALUES (?1, ?2, ?3)",
             params![profile.id, profile.name, data],
         )?;
@@ -119,7 +127,8 @@ impl StorageBackend for SqliteStorage {
     }
     
     fn load_profile(&self, id: &str) -> Result<FirearmProfile> {
-        let data: String = self.conn.query_row(
+        let conn = self.conn.lock().unwrap();
+        let data: String = conn.query_row(
             "SELECT data FROM firearm_profiles WHERE id = ?1",
             params![id],
             |row| row.get(0),
@@ -129,7 +138,8 @@ impl StorageBackend for SqliteStorage {
     }
     
     fn list_profiles(&self) -> Result<Vec<FirearmProfile>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT data FROM firearm_profiles ORDER BY name"
         )?;
         
@@ -144,7 +154,8 @@ impl StorageBackend for SqliteStorage {
     }
     
     fn delete_profile(&mut self, id: &str) -> Result<()> {
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "DELETE FROM firearm_profiles WHERE id = ?1",
             params![id],
         )?;
@@ -159,7 +170,6 @@ pub struct IndexedDbStorage;
 #[cfg(target_arch = "wasm32")]
 impl StorageBackend for IndexedDbStorage {
     fn save_calculation(&mut self, _calc: &SavedCalculation) -> Result<()> {
-        // Implement using IndexedDB
         Ok(())
     }
     

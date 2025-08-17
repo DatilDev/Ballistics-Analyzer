@@ -1,5 +1,5 @@
 [package]
-name = "ballistics-core"
+name = "ballistics_core"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

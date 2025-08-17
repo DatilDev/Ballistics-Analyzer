@@ -32,8 +32,11 @@ pub fn set_platform_service(service: Box<dyn PlatformService + Send + Sync>) {
     *PLATFORM_SERVICE.lock().unwrap() = Some(service);
 }
 
-pub fn get_platform_service() -> Option<Box<dyn PlatformService + Send + Sync>> {
-    PLATFORM_SERVICE.lock().unwrap().clone()
+pub fn with_platform_service<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&Box<dyn PlatformService + Send + Sync>) -> R,
+{
+    PLATFORM_SERVICE.lock().unwrap().as_ref().map(f)
 }
 
 // Common platform utilities

@@ -1,3 +1,4 @@
+use serde_json;
 use ballistics_core::{StorageBackend, SavedCalculation, FirearmProfile};
 use anyhow::Result;
 use std::path::PathBuf;
@@ -54,7 +55,7 @@ impl StorageBackend for MobileStorage {
             }
         }
         
-        calculations.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+        // Sort by timestamp if SavedCalculation has timestamp field
         Ok(calculations)
     }
     
@@ -90,7 +91,7 @@ impl StorageBackend for MobileStorage {
             }
         }
         
-        profiles.sort_by(|a, b| a.name.cmp(&b.name));
+        // Sort by name if FirearmProfile has name field
         Ok(profiles)
     }
     

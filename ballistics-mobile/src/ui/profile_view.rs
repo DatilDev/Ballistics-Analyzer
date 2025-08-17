@@ -1,7 +1,7 @@
 use crate::app::MobileApp;
-use ballistics_core::{FirearmProfile, AmmunitionProfile};
-use egui::{Ui, ScrollArea, CollapsingHeader, Grid, Button, TextEdit};
 use uuid::Uuid;
+use ballistics_core::{FirearmProfile, AmmunitionProfile};
+use egui::{Ui, ScrollArea, CollapsingHeader, Grid};
 
 pub fn render(app: &mut MobileApp, ui: &mut Ui) {
     ui.heading("🔫 Firearm Profiles");

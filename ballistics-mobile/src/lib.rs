@@ -1,14 +1,13 @@
-#![cfg_attr(target_os = "android", feature(panic_info_message))]
-
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+#![cfg_attr(target_os = "android", feature(panic_info_message))]
+
 
 pub mod app;
 pub mod ui;
 pub mod platform;
 pub mod storage;
 
-use app::MobileApp;
 
 // Android JNI exports
 #[cfg(target_os = "android")]

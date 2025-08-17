@@ -101,6 +101,7 @@ impl MobileApp {
     pub fn update(&mut self) {
         let raw_output = self.ctx.run(self.raw_input.clone(), |ctx| {
             crate::ui::render_mobile_ui(self, ctx);
+            crate::ui::render_mobile_ui(self, ctx);
         });
         
         // Handle platform events from output
@@ -116,7 +117,7 @@ impl MobileApp {
         
         let pos = Pos2::new(x, y);
         let touch_id = TouchId::from(0);
-        let device_id = TouchDeviceId::from(0);
+        let device_id = TouchDeviceId(0);
         
         let phase = match event_type {
             0 => TouchPhase::Start,

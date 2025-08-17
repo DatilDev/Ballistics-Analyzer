@@ -1,5 +1,6 @@
 use crate::app::{MobileApp, ViewType};
-use egui::{Ui, ScrollArea, Grid, CollapsingHeader, Button, RichText, Color32, plot};
+use egui::{Ui,  CollapsingHeader, Color32};
+use egui_plot as plot;
 
 pub fn render(app: &mut MobileApp, ui: &mut Ui) {
     // Show main view for input, but with results emphasis

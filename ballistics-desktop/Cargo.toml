@@ -6,10 +6,10 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-ballistics-core = { path = "../ballistics-core", features = ["gui", "storage", "nostr", "async"] }
+ballistics_core = { path = "../ballistics_core", features = ["gui", "storage", "nostr", "async"] }
 
 # Desktop framework
-eframe = { workspace = true, default-features = true }
+eframe = { workspace = true }
 egui = { workspace = true }
 egui_extras = { workspace = true }
 egui_plot = { workspace = true }
@@ -20,7 +20,7 @@ dirs = { workspace = true }
 webbrowser = { workspace = true }
 
 # System integration
-arboard = { workspace = true, default-features = false }
+arboard = { workspace = true }
 env_logger = { workspace = true }
 tracing = { workspace = true }
 
@@ -32,7 +32,7 @@ tokio = { workspace = true, features = ["full"] }
 tokio-tungstenite = { workspace = true }
 
 # Nostr
-nostr-sdk = { workspace = true, features = ["sqlite", "nip04", "nip44", "nip46", "nip07"] }
+nostr-sdk = { workspace = true, features = ["sqlite", "nip04", "nip07"] }
 
 # Image processing
 image = { workspace = true }

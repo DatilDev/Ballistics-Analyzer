@@ -6,10 +6,10 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-ballistics-core = { path = "../ballistics-core", features = ["gui", "nostr"] }
+ballistics_core = { path = "../ballistics_core", features = ["gui", "nostr"] }
 
 # WASM framework
-eframe = { workspace = true, default-features = false, features = ["default_fonts", "glow"] }
+eframe = { workspace = true, features = ["glow"] }
 egui = { workspace = true }
 egui_extras = { workspace = true }
 egui_plot = { workspace = true }
@@ -47,7 +47,7 @@ uuid = { workspace = true, features = ["js"] }
 chrono = { workspace = true, features = ["wasmbind"] }
 
 # Nostr for web
-nostr-sdk = { workspace = true, features = ["nip07", "indexeddb", "webpki"] }
+nostr-sdk = { workspace = true, features = ["nip07"] }
 
 [lib]
 crate-type = ["cdylib"]
