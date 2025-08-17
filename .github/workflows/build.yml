@@ -230,6 +230,15 @@ jobs:
       with:
         targets: ${{ matrix.target }}
         
+    - name: Ensure Cargo.lock is up to date
+      run: |
+        # Generate or update Cargo.lock
+        if [ ! -f Cargo.lock ]; then
+          cargo generate-lockfile
+        else
+          cargo update
+        fi
+        
     - name: Install Linux dependencies
       if: matrix.os == 'ubuntu-latest'
       run: |
