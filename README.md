@@ -1,429 +1,328 @@
-# GitHub Repository Structure
+# 🎯 Ballistics Analyzer
 
-## README.md (Complete Version)
-
-```markdown
-# Ballistics Analyzer
-
-[![Build Status](https://github.com/ballistics-analyzer/ballistics-analyzer/workflows/Build%20and%20Release/badge.svg)](https://github.com/ballistics-analyzer/ballistics-analyzer/actions)
+[![Build Status](https://github.com/DatilDev/Ballistics-Analyzer/workflows/Build%20and%20Release/badge.svg)](https://github.com/DatilDev/Ballistics-Analyzer/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![PWA](https://img.shields.io/badge/PWA-Ready-brightgreen.svg)](https://ballistics-analyzer.github.io)
+[![PWA Ready](https://img.shields.io/badge/PWA-Ready-brightgreen.svg)](https://datildev.github.io/Ballistics-Analyzer/)
+[![Rust](https://img.shields.io/badge/rust-%E2%9C%94-orange.svg)](https://www.rust-lang.org)
+[![GitHub release](https://img.shields.io/github/release/DatilDev/Ballistics-Analyzer.svg)](https://github.com/DatilDev/Ballistics-Analyzer/releases)
 
-Professional-grade ballistics calculation software with hardware integration, available as a Progressive Web App and native applications.
+Professional-grade ballistics calculation software with hardware integration, available as a Progressive Web App and native applications for all platforms.
+
+<div align="center">
+  <img src="assets/screenshot-main.png" alt="Ballistics Analyzer Main Screen" width="600">
+</div>
 
 ## 🌐 Try It Now
 
-**[Launch Ballistics Analyzer PWA](https://ballistics-analyzer.github.io)**
+### **[Launch Ballistics Analyzer PWA →](https://datildev.github.io/Ballistics-Analyzer/)**
 
-Works on any modern browser - install it as an app for offline access!
+Works instantly in any modern browser - install it as an app for offline access!
 
-## 🎯 Features
+## ✨ Features
 
-### Core Functionality
-- Advanced trajectory modeling with atmospheric corrections
-- MOA and MIL adjustments for scope corrections
-- Photo attachments and detailed notes
-- Firearm profiles (rifle, pistol, shotgun)
-- Ammunition load library
-- Hardware integration (rangefinders, weather meters)
-- Secure sharing via Nostr protocol
+### 🎯 Core Ballistics Engine
+- **Advanced Trajectory Modeling** - Modified point mass calculations with atmospheric corrections
+- **Multiple Drag Models** - Support for G1, G7, and custom drag coefficients
+- **Environmental Corrections** - Temperature, pressure, humidity, altitude, and Coriolis effect
+- **Wind Modeling** - Multi-zone wind with gradient calculations
+- **Scope Adjustments** - MOA and MIL corrections for elevation and windage
+- **Zero Calculations** - Automatic sight-in adjustments for any distance
 
-### Progressive Web App (PWA)
-- **Install as native app** on any device
-- **Offline functionality** - works without internet
-- **Automatic updates** when connected
-- **Push notifications** for shared calculations
-- **Native features** like camera and Bluetooth access
+### 🔫 Firearm Management
+- **Firearm Profiles** - Store unlimited rifle, pistol, and shotgun configurations
+- **Ammunition Library** - Pre-loaded factory ammo data from major manufacturers
+- **Custom Loads** - Add your own handload data with powder specifications
+- **Barrel Twist Calculator** - Stability calculations based on Miller formula
+- **Profile Sharing** - Export/import profiles via JSON or Nostr protocol
 
-## 📱 Installation Options
+### 📡 Hardware Integration
+- **Bluetooth Rangefinders** - Direct connection to Sig KILO, Leica CRF, Vortex Fury
+- **Weather Meters** - Auto-import from Kestrel 5700, WeatherFlow devices
+- **Real-time Updates** - Live environmental data feeds into calculations
+- **Auto-apply** - Seamless data integration with manual override options
+- **Hardware Status** - Connection monitoring and battery indicators
 
-### Web App (Recommended)
-1. Visit [https://ballistics-analyzer.github.io](https://ballistics-analyzer.github.io)
-2. Click "Install" when prompted (or use browser menu)
-3. Launch from your home screen/app drawer
+### 🔐 Privacy & Security
+- **Local-First Architecture** - All data stored encrypted on your device
+- **Nostr Authentication** - Decentralized identity with no central servers
+- **Zero Tracking** - No analytics, telemetry, or user monitoring
+- **End-to-End Encryption** - Secure sharing via cryptographic keys
+- **Open Source** - Complete transparency and auditability
 
-### Desktop Applications
-Download from [Releases](https://github.com/ballistics-analyzer/ballistics-analyzer/releases):
-- **Windows**: `ballistics-analyzer-windows.exe`
-- **macOS**: `ballistics-analyzer-macos.dmg`
-- **Linux**: `ballistics-analyzer-linux.AppImage`
+### 📱 Progressive Web App
+- **Install Anywhere** - Works on Windows, macOS, Linux, Android, iOS
+- **Offline Mode** - Full functionality without internet connection
+- **Auto Updates** - Seamless updates when connected
+- **Native Features** - Camera access, Bluetooth, push notifications
+- **Small Size** - < 5MB initial download, efficient caching
 
-### Mobile Apps
-- **Android**: Download APK from [Releases](https://github.com/ballistics-analyzer/ballistics-analyzer/releases)
-- **iOS**: Build from source using Xcode
+## 📦 Installation
 
-## 🚀 Quick Start
+### Option 1: Web App (Recommended)
+1. Visit [https://datildev.github.io/Ballistics-Analyzer/](https://datildev.github.io/Ballistics-Analyzer/)
+2. Click "Install" when prompted (or menu → "Install App")
+3. Launch from your home screen or applications folder
 
-### For Users
-1. **Login with Nostr** - Use existing key or generate new
-2. **Create firearm profile** - Set up your weapon system
-3. **Connect hardware** (optional) - Pair Bluetooth devices
-4. **Calculate** - Enter data and get instant results
+### Option 2: Desktop Applications
+Download from [Latest Release](https://github.com/DatilDev/Ballistics-Analyzer/releases/latest):
 
-### For Developers
+| Platform | Download | Requirements |
+|----------|----------|--------------|
+| Windows | [ballistics-analyzer-windows.exe](https://github.com/DatilDev/Ballistics-Analyzer/releases/latest/download/ballistics-analyzer-windows.exe) | Windows 10+ |
+| macOS | [ballistics-analyzer-macos](https://github.com/DatilDev/Ballistics-Analyzer/releases/latest/download/ballistics-analyzer-macos) | macOS 11+ |
+| Linux | [ballistics-analyzer-linux](https://github.com/DatilDev/Ballistics-Analyzer/releases/latest/download/ballistics-analyzer-linux) | GTK3, glibc 2.31+ |
+| Arch Linux | [ballistics-analyzer.pkg.tar.zst](https://github.com/DatilDev/Ballistics-Analyzer/releases/latest/download/ballistics-analyzer.pkg.tar.zst) | Via pacman |
+
+### Option 3: Mobile Apps
+- **Android/iOS**: Use the PWA version for best experience
+- **Android APK**: Coming soon (development libraries available)
+
+## 🚀 Quick Start Guide
+
+### First Time Setup
+1. **Launch the app** from web or desktop
+2. **Create identity**:
+   - Generate new Nostr keys, or
+   - Import existing nsec/hex key, or
+   - Connect via NIP-07 extension
+3. **Create firearm profile**:
+   - Enter rifle/pistol specifications
+   - Set sight height and zero distance
+4. **Connect hardware** (optional):
+   - Pair Bluetooth rangefinder
+   - Connect weather meter
+
+### Basic Calculation
+1. **Enter projectile data**:
+   - Caliber and bullet weight
+   - Muzzle velocity
+   - Ballistic coefficient (G1/G7)
+2. **Set environmental conditions**:
+   - Temperature, pressure, altitude
+   - Wind speed and direction
+3. **Calculate trajectory**:
+   - View drop/drift table
+   - See MOA/MIL adjustments
+   - Export or share results
+
+### Advanced Features
+- **Photo attachments** - Document shots with images
+- **Notes system** - Add detailed observations
+- **History tracking** - Review past calculations
+- **Batch calculations** - Multiple ranges at once
+- **Trajectory graphs** - Visual representation
+- **Print reports** - Formatted range cards
+
+## 🛠️ Building from Source
+
+### Prerequisites
+- [Rust](https://rustup.rs/) 1.75+
+- [Node.js](https://nodejs.org/) 18+ (for PWA tools)
+- Platform-specific requirements:
+  - **Linux**: `libgtk-3-dev libssl-dev pkg-config`
+  - **Windows**: Visual Studio Build Tools 2019+
+  - **macOS**: Xcode Command Line Tools
+
+### Clone and Build
 
 ```bash
 # Clone repository
-git clone https://github.com/ballistics-analyzer/ballistics-analyzer.git
-cd ballistics-analyzer
+git clone https://github.com/DatilDev/Ballistics-Analyzer.git
+cd Ballistics-Analyzer
 
-# Install dependencies
-cargo build
+# Install Rust (if needed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# Run native app
-cargo run
-
-# Build PWA
-./build-web.sh
-
-# Run tests
-cargo test
-```
-
-## 🔧 Building from Source
-
-### Prerequisites
-- Rust 1.75+ 
-- Node.js 18+ (for PWA build)
-- Platform-specific tools:
-  - **Android**: Android SDK & NDK
-  - **iOS**: Xcode
-  - **Windows**: Visual Studio Build Tools
-
-### Build Commands
-
-```bash
-# Web/PWA
-wasm-pack build --target web --release
-npm run build
-
-# Desktop
+# Build desktop application
 cargo build --release
 
-# Android
-cargo ndk -t arm64-v8a build --release
+# Run desktop app
+cargo run --release
 
-# iOS
-cargo lipo --release
+# Build PWA (requires wasm-pack)
+curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+wasm-pack build --target web --out-dir pkg --release
+
+# Serve PWA locally
+cd dist && python3 -m http.server 8000
+# Open http://localhost:8000
 ```
 
-## 📡 Hardware Support
+### Platform-Specific Builds
 
-### Supported Devices
+#### Windows
+```powershell
+# Build for Windows
+cargo build --release --target x86_64-pc-windows-msvc
+# Output: target/release/ballistics-analyzer.exe
+```
 
-#### Rangefinders
-- Sig Sauer KILO series
-- Leica Rangemaster CRF
-- Vortex Fury HD
-- ATN Auxiliary Ballistic Laser
+#### macOS
+```bash
+# Build for macOS (Intel)
+cargo build --release --target x86_64-apple-darwin
 
-#### Weather Meters
-- Kestrel 5700 Elite
-- Kestrel DROP
-- WeatherFlow WEATHERmeter
-- Bluetooth weather stations
+# Build for macOS (Apple Silicon)
+cargo build --release --target aarch64-apple-darwin
 
-### Connection Methods
-- Bluetooth LE (primary)
-- Serial/USB (desktop only)
-- Web Bluetooth API (PWA)
+# Create universal binary
+lipo -create target/x86_64-apple-darwin/release/ballistics-analyzer \
+             target/aarch64-apple-darwin/release/ballistics-analyzer \
+     -output ballistics-analyzer-universal
+```
 
-## 🔐 Privacy & Security
+#### Linux
+```bash
+# Build for Linux
+cargo build --release --target x86_64-unknown-linux-gnu
 
-- **Local-first**: All data stored on your device
-- **No tracking**: Zero analytics or telemetry
-- **Encrypted storage**: User-specific encryption
-- **Nostr integration**: Decentralized identity
-- **Open source**: Full transparency
+# Create AppImage (optional)
+./create-appimage.sh
 
-## 📊 Technical Details
+# Build Arch package
+makepkg -si
+```
 
-### Architecture
-- **Frontend**: egui (immediate mode GUI)
-- **Backend**: Rust with tokio async runtime
-- **Storage**: SQLite (native) / IndexedDB (web)
-- **Calculations**: High-precision ballistics engine
-- **Cross-platform**: Single codebase for all platforms
+#### Android (Development)
+```bash
+# Install Android tools
+rustup target add aarch64-linux-android
+cargo install cargo-ndk
 
-### Performance
-- 60 FPS UI rendering
-- < 100ms calculation time
-- < 5MB PWA size
-- Offline-first design
+# Build libraries
+cargo ndk -t arm64-v8a -t armeabi-v7a build --release
+```
+
+## 📡 Supported Hardware
+
+### Rangefinders (Bluetooth LE)
+| Brand | Models | Features |
+|-------|--------|----------|
+| Sig Sauer | KILO2200BDX, KILO2400ABS, KILO3000BDX | Range, angle, temperature |
+| Leica | Rangemaster CRF 2800, CRF 3500 | Range, angle, pressure |
+| Vortex | Fury HD 5000AB, Razor HD 4000GB | Range, angle, bearing |
+| ATN | ABL 1000, ABL 1500 | Range, angle |
+
+### Weather Meters
+| Brand | Models | Features |
+|-------|--------|----------|
+| Kestrel | 5700 Elite, DROP D3 | Full environmental suite |
+| WeatherFlow | WEATHERmeter | Wind, temp, pressure |
+| Bluetooth Stations | Generic BLE weather | Basic environmental |
+
+### Connection Guide
+1. Enable Bluetooth on device
+2. Open Hardware panel (📡 icon)
+3. Click "Connect" for device type
+4. Select from discovered devices
+5. Authorize pairing if prompted
+6. Data auto-populates in calculations
 
 ## 🤝 Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-### Development Workflow
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📚 Documentation
-
-- [User Guide](docs/USER_GUIDE.md)
-- [API Reference](docs/API.md)
-- [Hardware Integration](docs/HARDWARE.md)
-- [Ballistics Theory](docs/THEORY.md)
-
-## 🗺️ Roadmap
-
-### Version 1.0 (Current)
-- ✅ Core ballistics engine
-- ✅ PWA support
-- ✅ Hardware integration
-- ✅ Nostr authentication
-
-### Version 1.1 (Q2 2025)
-- [ ] 6DOF calculations
-- [ ] Doppler radar integration
-- [ ] Advanced wind modeling
-- [ ] Reloading database
-
-### Version 2.0 (Q4 2025)
-- [ ] AR trajectory overlay
-- [ ] AI-assisted corrections
-- [ ] Team synchronization
-- [ ] Competition mode
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Nostr protocol developers
-- Rust egui community
-- Ballistics research community
-- Open source contributors
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/ballistics-analyzer/ballistics-analyzer/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/ballistics-analyzer/ballistics-analyzer/discussions)
-- **Email**: support@ballistics-analyzer.org
-- **Nostr**: `#ballisticsanalyzer`
-
----
-
-**⚠️ Disclaimer**: This software is for educational and sporting purposes. Always verify calculations with real-world testing and follow all safety protocols.
-```
-
-## .gitignore
-
-```gitignore
-# Rust
-target/
-Cargo.lock
-**/*.rs.bk
-*.pdb
-
-# Web/WASM
-pkg/
-node_modules/
-dist/
-*.wasm
-*.js.map
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Build artifacts
-build/
-out/
-*.app
-*.exe
-*.dmg
-*.AppImage
-*.apk
-*.ipa
-
-# Local data
-*.db
-*.sqlite
-local_storage/
-
-# Environment
-.env
-.env.local
-
-# Certificates
-*.pem
-*.key
-*.crt
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Testing
-coverage/
-*.lcov
-.nyc_output/
-
-# Documentation
-docs/_build/
-*.pdf
-
-# Mobile
-.gradle/
-*.jks
-*.keystore
-Pods/
-*.xcworkspace
-*.xcuserdata
-```
-
-## CONTRIBUTING.md
-
-```markdown
-# Contributing to Ballistics Analyzer
-
-Thank you for your interest in contributing! We welcome all contributions that improve the project.
-
-## Code of Conduct
-
-Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
-
-## Getting Started
-
-1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/ballistics-analyzer.git`
-3. Create a branch: `git checkout -b feature/your-feature`
-4. Make your changes
-5. Test thoroughly
-6. Commit: `git commit -m "Add your feature"`
-7. Push: `git push origin feature/your-feature`
-8. Create a Pull Request
-
-## Development Setup
-
+### Development Setup
 ```bash
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
 # Install development tools
-cargo install cargo-watch
-cargo install wasm-pack
-cargo install cargo-audit
+cargo install cargo-watch cargo-audit cargo-tarpaulin
 
-# Install Node.js dependencies (for PWA)
-npm install
-
-# Run development server
+# Run with auto-reload
 cargo watch -x run
 
 # Run tests
 cargo test
+
+# Check code quality
+cargo clippy -- -D warnings
+cargo fmt --check
+
+# Security audit
+cargo audit
 ```
 
-## Coding Standards
+### Areas for Contribution
+- 🐛 Bug fixes and testing
+- 📚 Documentation improvements
+- 🌍 Translations (i18n support)
+- 🎨 UI/UX enhancements
+- 📡 Additional hardware support
+- 🧮 Advanced ballistics models
+- 📱 Mobile app development
 
-### Rust Code
-- Follow standard Rust conventions
-- Use `cargo fmt` before committing
-- Run `cargo clippy` and fix warnings
-- Add tests for new features
-- Document public APIs
+## 📊 Technical Architecture
 
-### JavaScript/TypeScript
-- Use ES6+ features
-- Follow ESLint rules
-- Add JSDoc comments
+### Core Stack
+- **Language**: Rust (performance & safety)
+- **GUI Framework**: egui (immediate mode)
+- **Web Target**: WebAssembly (wasm-bindgen)
+- **Async Runtime**: tokio (desktop) / wasm-bindgen-futures (web)
+- **Database**: SQLite (desktop) / IndexedDB (web)
+- **Networking**: Nostr protocol for sharing
 
-### Commits
-- Use conventional commits format
-- Keep commits atomic and focused
-- Write clear commit messages
+### Performance
+- 60 FPS rendering on all platforms
+- < 100ms calculation time for 1000-yard trajectory
+- < 50MB RAM usage (typical)
+- < 5MB initial PWA download
+- Offline-first with background sync
 
-Example:
+### Project Structure
 ```
-feat: add wind gradient calculations
-fix: correct MOA adjustment at extreme ranges
-docs: update hardware compatibility list
-```
-
-## Testing
-
-### Unit Tests
-```bash
-cargo test
-```
-
-### Integration Tests
-```bash
-cargo test --test integration
-```
-
-### WASM Tests
-```bash
-wasm-pack test --headless --firefox
-```
-
-## Documentation
-
-- Update README.md for user-facing changes
-- Add inline documentation for code
-- Update API docs for new endpoints
-- Include examples where helpful
-
-## Pull Request Process
-
-1. Update documentation
-2. Add tests for new features
-3. Ensure all tests pass
-4. Update CHANGELOG.md
-5. Request review from maintainers
-
-## Release Process
-
-1. Update version in Cargo.toml
-2. Update CHANGELOG.md
-3. Create release PR
-4. Tag release after merge
-5. GitHub Actions handles deployment
-
-## Areas for Contribution
-
-### High Priority
-- 6DOF ballistics implementation
-- Additional hardware support
-- Performance optimizations
-- Mobile app improvements
-
-### Good First Issues
-- Documentation improvements
-- UI/UX enhancements
-- Test coverage
-- Translation support
-
-### Feature Requests
-Check [Issues](https://github.com/ballistics-analyzer/ballistics-analyzer/issues) for feature requests.
-
-## Questions?
-
-- Open an issue for bugs
-- Start a discussion for features
-- Join our Nostr channel: #ballisticsanalyzer
-
-Thank you for contributing!
+Ballistics-Analyzer/
+├── src/
+│   ├── main.rs              # Desktop entry point
+│   ├── lib.rs               # Library root
+│   ├── ballistics.rs        # Core calculations
+│   ├── hardware.rs          # Device integration
+│   ├── auth.rs              # Nostr authentication
+│   ├── storage.rs           # Data persistence
+│   └── ui.rs                # Interface components
+├── assets/                  # Icons and resources
+├── .github/workflows/       # CI/CD pipelines
+├── Cargo.toml              # Rust dependencies
+├── index.html              # PWA entry
+├── manifest.json           # PWA manifest
+└── sw.js                   # Service worker
 ```
 
-## LICENSE
+## 🗺️ Roadmap
+
+### Version 1.0 ✅ (Current)
+- [x] Core ballistics engine
+- [x] PWA with offline support
+- [x] Desktop applications
+- [x] Bluetooth hardware integration
+- [x] Nostr authentication
+- [x] Profile management
+
+### Version 1.1 (UNK)
+- [ ] 6DOF calculations
+- [ ] Doppler radar support
+- [ ] Multi-zone wind profiles
+- [ ] Reloading database
+- [ ] Export to Applied Ballistics format
+- [ ] Backup/restore via Nostr relays
+
+### Version 2.0 (UNK)
+- [ ] AR trajectory overlay
+- [ ] AI shot correction
+- [ ] Team synchronization
+- [ ] Competition mode
+- [ ] Voice commands
+- [ ] Watch app support
+
+## 📚 Documentation
+
+- [User Guide](docs/USER_GUIDE.md) - Complete usage instructions
+- [API Reference](docs/API.md) - Developer documentation
+- [Hardware Guide](docs/HARDWARE.md) - Device setup instructions
+- [Ballistics Theory](docs/THEORY.md) - Mathematical models explained
+- [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
+
+## 📄 License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
 
 ```
 MIT License
@@ -432,182 +331,52 @@ Copyright (c) 2025 Ballistics Analyzer Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+in the Software without restriction...
 ```
 
-## package.json (for PWA build)
+## 🙏 Acknowledgments
 
-```json
-{
-  "name": "ballistics-analyzer",
-  "version": "1.0.0",
-  "description": "Professional ballistics calculator PWA",
-  "scripts": {
-    "build": "wasm-pack build --target web --out-dir pkg --release",
-    "serve": "python3 -m http.server 8000",
-    "dev": "npm run build && npm run serve",
-    "test": "wasm-pack test --headless --firefox",
-    "deploy": "npm run build && gh-pages -d dist"
-  },
-  "devDependencies": {
-    "gh-pages": "^5.0.0",
-    "rollup": "^3.20.0",
-    "@rollup/plugin-node-resolve": "^15.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ballistics-analyzer/ballistics-analyzer.git"
-  },
-  "keywords": [
-    "ballistics",
-    "calculator",
-    "pwa",
-    "rust",
-    "wasm"
-  ],
-  "author": "Ballistics Analyzer Team",
-  "license": "MIT"
-}
-```
+- [Nostr Protocol](https://nostr.com) - Decentralized networking
+- [egui](https://github.com/emilk/egui) - Immediate mode GUI
+- [Rust Community](https://rust-lang.org) - Language and ecosystem
+- [JBM Ballistics](http://www.jbmballistics.com/) - Ballistics research
+- All open source contributors
 
-## build-web.sh
+## 📞 Support
 
-```bash
-#!/bin/bash
+- **Bug Reports**: [GitHub Issues](https://github.com/DatilDev/Ballistics-Analyzer/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/DatilDev/Ballistics-Analyzer/discussions)
+- **Security**: [Security Policy](SECURITY.md)
+- **Email**: support@datildev.com
+- **Nostr**: `#ballisticsanalyzer`
 
-set -e
+## 🏆 Sponsors
 
-echo "Building Ballistics Analyzer PWA..."
+This project is maintained by volunteers. Support development:
 
-# Colors
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-NC='\033[0m'
+- ⭐ Star this repository
+- 🐛 Report bugs and test features
+- 💡 Suggest improvements
+- 🤝 Contribute code
+- ☕ [Buy us a coffee](https://ko-fi.com/ballisticsanalyzer)
+- ⚡ [Lightning tips](lightning:ballisticsanalyzer@getalby.com)
 
-# Check dependencies
-command -v wasm-pack >/dev/null 2>&1 || { 
-    echo -e "${RED}wasm-pack is required but not installed.${NC}" 
-    echo "Install with: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh"
-    exit 1
-}
+## 📈 Stats
 
-# Clean previous builds
-echo -e "${BLUE}Cleaning previous builds...${NC}"
-rm -rf pkg dist
+![GitHub stars](https://img.shields.io/github/stars/DatilDev/Ballistics-Analyzer?style=social)
+![GitHub forks](https://img.shields.io/github/forks/DatilDev/Ballistics-Analyzer?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/DatilDev/Ballistics-Analyzer?style=social)
 
-# Build WASM
-echo -e "${BLUE}Building WASM module...${NC}"
-wasm-pack build --target web --out-dir pkg --release
+---
 
-# Create dist directory
-mkdir -p dist
-mkdir -p dist/assets
-mkdir -p dist/pkg
+<div align="center">
 
-# Copy files
-echo -e "${BLUE}Copying files...${NC}"
-cp index.html dist/
-cp manifest.json dist/
-cp sw.js dist/
-cp -r assets/* dist/assets/ 2>/dev/null || :
-cp -r pkg/* dist/pkg/
+**⚠️ Safety Disclaimer**
 
-# Generate icons if not present
-if [ ! -f "dist/assets/icon-192x192.png" ]; then
-    echo -e "${BLUE}Generating PWA icons...${NC}"
-    # Create placeholder icons (in production, use proper icon generator)
-    mkdir -p dist/assets
-    # This would normally use ImageMagick or similar to generate icons
-fi
+This software is for educational and sporting purposes only. Always verify calculations with real-world testing. Follow all firearm safety rules and local regulations. The developers assume no liability for the use or misuse of this software.
 
-# Optimize for production
-echo -e "${BLUE}Optimizing for production...${NC}"
-# Add any optimization steps here
+**Made with ❤️ by the Ballistics Community**
 
-echo -e "${GREEN}✓ Build complete!${NC}"
-echo -e "To test locally, run: ${BLUE}cd dist && python3 -m http.server 8000${NC}"
-echo -e "Then visit: ${BLUE}http://localhost:8000${NC}"
-```
+[Website](https://datildev.github.io/Ballistics-Analyzer/) • [Documentation](docs/) • [Releases](https://github.com/DatilDev/Ballistics-Analyzer/releases) • [Issues](https://github.com/DatilDev/Ballistics-Analyzer/issues)
 
-## Directory Structure
-
-```
-ballistics-analyzer/
-├── .github/
-│   └── workflows/
-│       └── build.yml
-├── assets/
-│   ├── icon-*.png
-│   ├── favicon.ico
-│   └── screenshots/
-├── docs/
-│   ├── USER_GUIDE.md
-│   ├── API.md
-│   ├── HARDWARE.md
-│   └── THEORY.md
-├── src/
-│   ├── main.rs
-│   ├── lib.rs
-│   ├── app.rs
-│   ├── auth.rs
-│   ├── ballistics.rs
-│   ├── storage.rs
-│   ├── hardware.rs
-│   ├── firearm_profiles.rs
-│   ├── load_data.rs
-│   ├── sharing.rs
-│   ├── pwa.rs
-│   └── ui.rs
-├── tests/
-│   ├── integration.rs
-│   └── unit/
-├── Cargo.toml
-├── index.html
-├── manifest.json
-├── sw.js
-├── package.json
-├── build-web.sh
-├── README.md
-├── CONTRIBUTING.md
-├── LICENSE
-└── .gitignore
-```
-
-## Quick Deploy Instructions
-
-```bash
-# 1. Create new repository on GitHub
-git init
-git add .
-git commit -m "Initial commit: Ballistics Analyzer v1.0"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/ballistics-analyzer.git
-git push -u origin main
-
-# 2. Enable GitHub Pages
-# Go to Settings > Pages > Source: Deploy from branch > Branch: gh-pages
-
-# 3. Deploy PWA
-npm run deploy
-
-# 4. Create release
-git tag -a v1.0.0 -m "Release version 1.0.0"
-git push origin v1.0.0
-```
-
-Your Ballistics Analyzer is now ready for deployment! The PWA will be available at `https://YOUR_USERNAME.github.io/ballistics-analyzer/`
+</div>

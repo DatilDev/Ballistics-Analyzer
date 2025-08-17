@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Ballistics Analyzer Contributors"]
 description = "Professional ballistics calculator with hardware integration"
 license = "MIT"
-repository = "https://github.com/ballistics-analyzer/ballistics-analyzer"
+repository = "https://github.com/DatilDev/Ballistics-Analyzer"
 keywords = ["ballistics", "trajectory", "shooting", "calculator", "nostr"]
 categories = ["science", "simulation"]
 
@@ -63,17 +63,17 @@ arboard = "3.4"
 # Serial port communication (for hardware)
 serialport = "4.5"
 
-# Android-specific dependencies
+# Android-specific dependencies 
+
 [target.'cfg(target_os = "android")'.dependencies]
-# Use compatible version with proper feature
-android-activity = { version = "0.5.2", features = ["native-activity"] }
-android_logger = "0.14"
-jni = "0.21"
-ndk = "0.8"  # Compatible version
-ndk-sys = "0.5"  # Compatible version
-ndk-context = "0.1"
-winit = { version = "0.29", features = ["android-native-activity"] }  # Compatible version
-raw-window-handle = "0.6"
+ android-activity = { version = "0.6.0", features = ["native-activity"] }
+ android_logger = "0.15.1"
+ jni = "0.21.1"
+ ndk = "0.9.0"
+ ndk-sys = "0.6.0+11769913"
+ ndk-context = "0.1.1"
+ winit = { version = "0.30.12", features = ["android-native-activity"] }
+ raw-window-handle = "0.6"
 
 # Web/WASM-specific dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -142,40 +142,24 @@ opt-level = "z"  # Optimize for size
 lto = "fat"
 panic = "abort"
 
-# Android-specific release profile
-[profile.android-release]
-inherits = "release"
-opt-level = "z"
-lto = true
-strip = true
-panic = "abort"
-
 # Package metadata for wasm-pack
 [package.metadata.wasm-pack]
 "wasm-opt" = ["-Oz", "--enable-simd"]
-
-# Android build metadata
-[package.metadata.android]
-build_targets = ["aarch64-linux-android", "armv7-linux-androideabi"]
-min_sdk_version = 21
-target_sdk_version = 34
 
 # Workspace configuration
 [workspace]
 members = ["."]
 resolver = "2"
 
-# Patches to ensure dependency compatibility
-[patch.crates-io]
-# Force specific versions for Android compatibility
-android-activity = { version = "0.5.2", features = ["native-activity"] }
+# REMOVED THE PROBLEMATIC PATCH SECTION
+# Patches cannot point to the same source they're patching
 
 # Features for conditional compilation
 [features]
 default = ["desktop"]
 desktop = []
 web = []
-android = []
+android = []  # Currently disabled
 hardware = []
 bluetooth = []
 debug-ui = []

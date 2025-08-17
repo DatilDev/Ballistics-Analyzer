@@ -1,17 +1,13 @@
-/target
-## .gitignore
-
-```gitignore
 # Rust
-target/
+/target/
 Cargo.lock
 **/*.rs.bk
 *.pdb
 
 # Web/WASM
-pkg/
-node_modules/
-dist/
+/pkg/
+/node_modules/
+/dist/
 *.wasm
 *.js.map
 
@@ -28,8 +24,8 @@ Thumbs.db
 desktop.ini
 
 # Build artifacts
-build/
-out/
+/build/
+/out/
 *.app
 *.exe
 *.dmg
@@ -58,12 +54,12 @@ yarn-debug.log*
 yarn-error.log*
 
 # Testing
-coverage/
+/coverage/
 *.lcov
 .nyc_output/
 
 # Documentation
-docs/_build/
+/docs/_build/
 *.pdf
 
 # Mobile
@@ -73,3 +69,10 @@ docs/_build/
 Pods/
 *.xcworkspace
 *.xcuserdata
+
+# Don't ignore the assets folder itself
+!/assets/
+
+# But ignore temporary files in assets
+/assets/*.tmp
+/assets/*.bak
