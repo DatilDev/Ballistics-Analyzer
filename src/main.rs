@@ -60,6 +60,9 @@ pub struct BallisticsApp {
     // Settings and confirmations
     settings: Settings,
     confirm_clear_data: bool,
+
+    // Store Key Input
+    key_input_buffer: String,
 }
 
 #[derive(Default, Clone, Serialize, Deserialize)]
@@ -155,6 +158,7 @@ impl BallisticsApp {
                 range_data: None,
                 timestamp: Utc::now().to_rfc3339(),
             },
+            key_input_buffer: String::new(),
             ..Default::default()
         };
 
@@ -850,86 +854,106 @@ impl BallisticsApp {
         }
     }
 
-    fn show_history_screen(&mut self, ui: &mut egui::Ui) {
-        ui.heading("📜 Calculation History");
+fn show_history_screen(&mut self, ui: &mut egui::Ui) {
+    ui.heading("📜 Calculation History");
 
-        ui.horizontal(|ui| {
-            if ui.button("🔄 Refresh").clicked() {
-                self.load_calculation_history();
-            }
-            ui.separator();
-            ui.label(format!("Total: {} calculations", self.calculation_history.len()));
-        });
-
+    ui.horizontal(|ui| {
+        if ui.button("🔄 Refresh").clicked() {
+            self.load_calculation_history();
+        }
         ui.separator();
+        ui.label(format!("Total: {} calculations", self.calculation_history.len()));
+    });
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            let mut to_delete = None;
-            
-            for (idx, calc) in self.calculation_history.iter().enumerate() {
-                ui.group(|ui: &mut egui::Ui| {
-                    ui.horizontal(|ui| {
-                        ui.label(format!("📅 {}", calc.calculation.timestamp));
+    ui.separator();
 
-                        if let Some(profile) = &calc.profile_name {
-                            ui.separator();
-                            ui.label(format!("🔫 {}", profile));
-                        }
+    egui::ScrollArea::vertical().show(ui, |ui| {
+        let mut to_delete = None;
+        let mut to_load = None;
+        let mut to_duplicate = None;
+        let mut to_share = None;
+        
+        // Collect calculation data to avoid borrow issues
+        let calculations: Vec<_> = self.calculation_history.iter().cloned().collect();
+        
+        for (idx, calc) in calculations.iter().enumerate() {
+            ui.group(|ui: &mut egui::Ui| {
+                ui.horizontal(|ui| {
+                    ui.label(format!("📅 {}", calc.calculation.timestamp));
 
-                        if !calc.image_ids.is_empty() {
-                            ui.separator();
-                            ui.label(format!("📷 {} photos", calc.image_ids.len()));
-                        }
-                    });
-
-                    ui.separator();
-
-                    ui.label(format!(
-                        "{} - {} gr @ {} fps",
-                        calc.calculation.projectile_data.caliber,
-                        calc.calculation.projectile_data.mass,
-                        calc.calculation.projectile_data.velocity
-                    ));
-
-                    if !calc.calculation.notes.is_empty() {
+                    if let Some(profile) = &calc.profile_name {
                         ui.separator();
-                        ui.label(format!(
-                            "📝 {}",
-                            calc.calculation.notes.lines().next().unwrap_or("")
-                        ));
+                        ui.label(format!("🔫 {}", profile));
                     }
 
-                    ui.separator();
-
-                    ui.horizontal(|ui| {
-                        if ui.button("📂 Load").clicked() {
-                            self.load_calculation(calc);
-                            self.current_screen = Screen::Analysis;
-                        }
-
-                        if ui.button("📋 Duplicate").clicked() {
-                            self.duplicate_calculation(calc);
-                        }
-
-                        if ui.button("🔄 Share").clicked() {
-                            self.share_specific_calculation(calc);
-                        }
-
-                        if ui.button("🗑️ Delete").clicked() {
-                            to_delete = Some(idx);
-                        }
-                    });
+                    if !calc.image_ids.is_empty() {
+                        ui.separator();
+                        ui.label(format!("📷 {} photos", calc.image_ids.len()));
+                    }
                 });
 
-                ui.add_space(10.0);
-            }
-            
-            if let Some(idx) = to_delete {
-                let id = self.calculation_history[idx].id.clone();
-                self.delete_calculation(&id);
-            }
-        });
-    }
+                ui.separator();
+
+                ui.label(format!(
+                    "{} - {} gr @ {} fps",
+                    calc.calculation.projectile_data.caliber,
+                    calc.calculation.projectile_data.mass,
+                    calc.calculation.projectile_data.velocity
+                ));
+
+                if !calc.calculation.notes.is_empty() {
+                    ui.separator();
+                    ui.label(format!(
+                        "📝 {}",
+                        calc.calculation.notes.lines().next().unwrap_or("")
+                    ));
+                }
+
+                ui.separator();
+
+                ui.horizontal(|ui| {
+                    if ui.button("📂 Load").clicked() {
+                        to_load = Some(calc.clone());
+                    }
+
+                    if ui.button("📋 Duplicate").clicked() {
+                        to_duplicate = Some(calc.clone());
+                    }
+
+                    if ui.button("🔄 Share").clicked() {
+                        to_share = Some(calc.clone());
+                    }
+
+                    if ui.button("🗑️ Delete").clicked() {
+                        to_delete = Some(idx);
+                    }
+                });
+            });
+
+            ui.add_space(10.0);
+        }
+        
+        // Apply actions after iteration
+        if let Some(calc) = to_load {
+            self.load_calculation(&calc);
+            self.current_screen = Screen::Analysis;
+        }
+        
+        if let Some(calc) = to_duplicate {
+            self.duplicate_calculation(&calc);
+        }
+        
+        if let Some(calc) = to_share {
+            self.share_specific_calculation(&calc);
+        }
+        
+        if let Some(idx) = to_delete {
+            let id = self.calculation_history[idx].id.clone();
+            self.delete_calculation(&id);
+        }
+    });
+}
+
 
     fn show_load_library_screen(&mut self, ui: &mut egui::Ui) {
         ui.heading("📚 Ammunition Load Library");
@@ -996,84 +1020,92 @@ impl BallisticsApp {
         }
     }
 
-    fn show_sharing_screen(&mut self, ui: &mut egui::Ui) {
-        ui.heading("🔄 Share Calculations");
-        ui.label("Share your ballistics calculations securely via Nostr protocol");
+fn show_sharing_screen(&mut self, ui: &mut egui::Ui) {
+    ui.heading("🔄 Share Calculations");
+    ui.label("Share your ballistics calculations securely via Nostr protocol");
 
-        ui.separator();
+    ui.separator();
 
-        ui.horizontal(|ui| {
-            ui.label("Sharing Options:");
-            ui.checkbox(&mut self.sharing.include_photos, "Include Photos");
-            ui.checkbox(&mut self.sharing.include_profile, "Include Firearm Profile");
-            ui.checkbox(&mut self.sharing.include_weather, "Include Weather Data");
-        });
+    ui.horizontal(|ui| {
+        ui.label("Sharing Options:");
+        ui.checkbox(&mut self.sharing.include_photos, "Include Photos");
+        ui.checkbox(&mut self.sharing.include_profile, "Include Firearm Profile");
+        ui.checkbox(&mut self.sharing.include_weather, "Include Weather Data");
+    });
 
-        ui.separator();
+    ui.separator();
 
-        ui.heading("Select Calculation to Share:");
+    ui.heading("Select Calculation to Share:");
 
-        egui::ScrollArea::vertical()
-            .max_height(300.0)
-            .show(ui, |ui| {
-                for calc in self.calculation_history.iter().take(10) {
-                    ui.group(|ui| {
-                        ui.label(&calc.calculation.timestamp);
-                        ui.label(format!(
-                            "{} - {} gr @ {} fps",
-                            calc.calculation.projectile_data.caliber,
-                            calc.calculation.projectile_data.mass,
-                            calc.calculation.projectile_data.velocity
-                        ));
-
-                        if ui.button("Share This").clicked() {
-                            if let Some(event_id) = self.sharing.share_calculation(&self.auth, calc) {
-                                self.show_share_success(&event_id);
-                            }
-                        }
-                    });
-                }
-            });
-
-        ui.separator();
-
-        ui.heading("Import Shared Calculation:");
-
-        ui.horizontal(|ui| {
-            ui.label("Nostr Event ID:");
-            ui.text_edit_singleline(&mut self.sharing.import_event_id);
-
-            if ui.button("Import").clicked() {
-                self.import_shared_calculation();
-            }
-        });
-
-        if !self.sharing.recent_shares.is_empty() {
-            ui.separator();
-            ui.heading("Recent Shares:");
-
-            for share in &self.sharing.recent_shares {
+    egui::ScrollArea::vertical()
+        .max_height(300.0)
+        .show(ui, |ui| {
+            // Collect calculations to avoid borrow issues
+            let calculations: Vec<_> = self.calculation_history.iter().take(10).cloned().collect();
+            let mut to_share = None;
+            
+            for calc in calculations.iter() {
                 ui.group(|ui| {
-                    ui.label(format!("Shared: {}", share.timestamp));
-                    let display_id = if share.event_id.len() >= 16 {
-                        format!(
-                            "Event ID: {}...{}",
-                            &share.event_id[..8],
-                            &share.event_id[share.event_id.len() - 8..]
-                        )
-                    } else {
-                        format!("Event ID: {}", share.event_id)
-                    };
-                    ui.label(display_id);
+                    ui.label(&calc.calculation.timestamp);
+                    ui.label(format!(
+                        "{} - {} gr @ {} fps",
+                        calc.calculation.projectile_data.caliber,
+                        calc.calculation.projectile_data.mass,
+                        calc.calculation.projectile_data.velocity
+                    ));
 
-                    if ui.button("Copy ID").clicked() {
-                        ui.output_mut(|o| o.copied_text = share.event_id.clone());
+                    if ui.button("Share This").clicked() {
+                        to_share = Some(calc.clone());
                     }
                 });
             }
+            
+            // Apply sharing action after iteration
+            if let Some(calc) = to_share {
+                if let Some(event_id) = self.sharing.share_calculation(&self.auth, &calc) {
+                    self.show_share_success(&event_id);
+                }
+            }
+        });
+
+    ui.separator();
+
+    ui.heading("Import Shared Calculation:");
+
+    ui.horizontal(|ui| {
+        ui.label("Nostr Event ID:");
+        ui.text_edit_singleline(&mut self.sharing.import_event_id);
+
+        if ui.button("Import").clicked() {
+            self.import_shared_calculation();
+        }
+    });
+
+    if !self.sharing.recent_shares.is_empty() {
+        ui.separator();
+        ui.heading("Recent Shares:");
+
+        for share in &self.sharing.recent_shares {
+            ui.group(|ui| {
+                ui.label(format!("Shared: {}", share.timestamp));
+                let display_id = if share.event_id.len() >= 16 {
+                    format!(
+                        "Event ID: {}...{}",
+                        &share.event_id[..8],
+                        &share.event_id[share.event_id.len() - 8..]
+                    )
+                } else {
+                    format!("Event ID: {}", share.event_id)
+                };
+                ui.label(display_id);
+
+                if ui.button("Copy ID").clicked() {
+                    ui.output_mut(|o| o.copied_text = share.event_id.clone());
+                }
+            });
         }
     }
-
+}
     fn show_settings_screen(&mut self, ui: &mut egui::Ui) {
         ui.heading("⚙️ Settings");
         ui.separator();
@@ -1458,61 +1490,60 @@ impl BallisticsApp {
         }
     }
 
-    fn show_load_data_popup(&mut self, _ui: &mut egui::Ui, ctx: &egui::Context) {
-        egui::Window::new("📚 Load Data Library")
-            .default_pos([300.0, 200.0])
-            .show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("Manufacturer:");
-                    egui::ComboBox::from_label("")
-                        .selected_text(&self.load_library.selected_manufacturer)
-                        .show_ui(ui, |ui| {
-                            for mfg in self.load_library.get_manufacturers() {
-                                ui.selectable_value(
-                                    &mut self.load_library.selected_manufacturer,
-                                    mfg.clone(),
-                                    &mfg,
-                                );
-                            }
-                        });
-                });
-
-                ui.separator();
-
-                // Clone loads to avoid borrow issues
-                let loads = self.load_library
-                    .get_loads_for_manufacturer(&self.load_library.selected_manufacturer)
-                    .cloned()
-                    .unwrap_or_default();
-
-                if !loads.is_empty() {
-                    egui::ScrollArea::vertical()
-                        .max_height(300.0)
-                        .show(ui, |ui| {
-                            for load in &loads {
-                                let load_clone = load.clone();
-                                ui.group(|ui| {
-                                    ui.label(&load.name);
-                                    ui.label(format!(
-                                        "{} gr @ {} fps",
-                                        load.bullet_weight, load.velocity
-                                    ));
-                                    if ui.button("Use").clicked() {
-                                        self.apply_load_data(&load_clone);
-                                        self.show_load_library = false;
-                                    }
-                                });
-                            }
-                        });
-                }
-
-                ui.separator();
-
-                if ui.button("Close").clicked() {
-                    self.show_load_library = false;
-                }
+fn show_load_data_popup(&mut self, _ui: &mut egui::Ui, ctx: &egui::Context) {
+    egui::Window::new("📚 Load Data Library")
+        .default_pos([300.0, 200.0])
+        .show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Manufacturer:");
+                egui::ComboBox::from_label("")
+                    .selected_text(&self.load_library.selected_manufacturer)
+                    .show_ui(ui, |ui| {
+                        for mfg in self.load_library.get_manufacturers() {
+                            ui.selectable_value(
+                                &mut self.load_library.selected_manufacturer,
+                                mfg.clone(),
+                                &mfg,
+                            );
+                        }
+                    });
             });
-    }
+
+            ui.separator();
+
+            // Fix: Handle Option<Vec<LoadData>> properly
+            let loads = self.load_library
+                .get_loads_for_manufacturer(&self.load_library.selected_manufacturer)
+                .unwrap_or_default();
+
+            if !loads.is_empty() {
+                egui::ScrollArea::vertical()
+                    .max_height(300.0)
+                    .show(ui, |ui| {
+                        for load in &loads {
+                            let load_clone = load.clone();
+                            ui.group(|ui| {
+                                ui.label(&load.name);
+                                ui.label(format!(
+                                    "{} gr @ {} fps",
+                                    load.bullet_weight, load.velocity
+                                ));
+                                if ui.button("Use").clicked() {
+                                    self.apply_load_data(&load_clone);
+                                    self.show_load_library = false;
+                                }
+                            });
+                        }
+                    });
+            }
+
+            ui.separator();
+
+            if ui.button("Close").clicked() {
+                self.show_load_library = false;
+            }
+        });
+}
 
     fn copy_results_to_clipboard(&self) {
         // Implement if needed; on native you can use `arboard`
@@ -1644,7 +1675,7 @@ impl BallisticsApp {
 
 
 // Settings struct
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 struct Settings {
     dark_mode: bool,
     show_tooltips: bool,

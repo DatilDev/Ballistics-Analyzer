@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use rusqlite::{params, Connection};
 
-use crate::ballistics::models::{AttachedImage, SavedCalculation};
+use crate::{AttachedImage, SavedCalculation};  // These are re-exported from lib.rs
 use crate::firearm_profiles::FirearmProfile;
 
 #[derive(Default)]
