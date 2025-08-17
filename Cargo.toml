@@ -10,7 +10,7 @@ keywords = ["ballistics", "trajectory", "shooting", "calculator", "nostr"]
 categories = ["science", "simulation"]
 
 [dependencies]
-# Core GUI framework - using consistent versions
+# Core GUI framework
 egui = "0.29"
 egui_extras = "0.29"
 
@@ -18,7 +18,7 @@ egui_extras = "0.29"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# Utilities with proper WASM support
+# Utilities
 chrono = { version = "0.4", features = ["serde", "wasmbind"] }
 uuid = { version = "1.10", features = ["v4", "serde", "js"] }
 rand = { version = "0.8", features = ["getrandom"] }
@@ -27,71 +27,54 @@ thiserror = "1.0"
 base64 = "0.22"
 futures = "0.3"
 hex = "0.4"
-
-# Required for WASM random number generation
 getrandom = { version = "0.2", features = ["js"] }
 
 # Desktop-only dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-# GUI framework for desktop
 eframe = { version = "0.29", default-features = true }
 egui_plot = "0.29"
 webbrowser = "1.0"
-
-# Logging
 env_logger = "0.11"
 tracing = "0.1"
 
-# Database with vendored SQLite to avoid linking issues
-rusqlite = { version = "0.32", features = ["bundled", "modern-full"] }
+# Database with bundled SQLite
+rusqlite = { version = "0.32", features = ["bundled"] }
+libsqlite3-sys = { version = "0.30", features = ["bundled"] }
+
 rfd = "0.15"
 dirs = "5.0"
 
-# Nostr protocol with vendored secp256k1
-nostr-sdk = { version = "0.35", default-features = false, features = [
-    "nip04", 
-    "nip44", 
-    "nip46", 
-    "nip07",
-    "sqlite",
-    "rustls-tls-native"
-] }
+# Nostr with vendored secp256k1
+secp256k1 = { version = "0.29", features = ["global-context", "rand-std"] }
+nostr = { version = "0.35", default-features = false }
+nostr-sdk = { version = "0.35", default-features = false, features = ["sqlite", "nip04", "nip07"] }
 
-# Async runtime for desktop
-tokio = { version = "1.40", features = ["full"] }
-tokio-tungstenite = "0.24"
+# Async runtime
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros", "time"] }
+tokio-tungstenite = { version = "0.24", default-features = false, features = ["connect"] }
+
+# Crypto - use pure Rust implementations
+ring = { version = "0.17", features = ["std"] }
+rustls = { version = "0.23", default-features = false, features = ["std", "ring"] }
 
 # Image processing
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 
-# Clipboard support
-arboard = "3.4"
+# Clipboard
+arboard = { version = "3.4", default-features = false }
 
-# Serial port communication (for hardware) - optional
+# Serial port (optional)
 serialport = { version = "4.5", optional = true }
 
-# Web/WASM-specific dependencies
+# WASM-specific dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-# For web, we need eframe with glow rendering
 eframe = { version = "0.29", default-features = false, features = ["default_fonts", "glow"] }
 egui_plot = "0.29"
-
-# WASM bindings
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
-
-# Nostr for WASM (lighter version)
-nostr-sdk = { version = "0.35", default-features = false, features = [
-    "nip04",
-    "nip07",
-    "indexeddb",
-    "webpki"
-] }
-
-# Web APIs
 web-sys = { version = "0.3", features = [
     "Window",
-    "Document",
+    "Document", 
     "Element",
     "HtmlElement",
     "HtmlCanvasElement",
@@ -99,40 +82,22 @@ web-sys = { version = "0.3", features = [
     "File",
     "FileList",
     "FileReader",
-    "Blob",
-    "BlobPropertyBag",
-    "Url",
-    "Navigator",
-    "ServiceWorker",
-    "ServiceWorkerContainer",
-    "ServiceWorkerRegistration",
     "Storage",
     "Location",
-    "History",
-    "MediaQueryList",
-    "Clipboard",
     "console",
 ] }
-
-# Error handling and logging for WASM
 console_error_panic_hook = "0.1"
 tracing-wasm = "0.2"
 
-# Android-specific dependencies
+# Android dependencies
 [target.'cfg(target_os = "android")'.dependencies]
 android-activity = { version = "0.6", features = ["native-activity"] }
 android_logger = "0.14"
 
-# Development dependencies
 [dev-dependencies]
 criterion = "0.5"
 pretty_assertions = "1.4"
 tempfile = "3.12"
-
-# Profile configurations
-[profile.dev]
-opt-level = 0
-debug = true
 
 [profile.release]
 opt-level = 3
@@ -146,35 +111,24 @@ opt-level = "z"
 lto = true
 panic = "abort"
 
-# Package metadata for wasm-pack
-[package.metadata.wasm-pack]
-"wasm-opt" = ["-Oz", "--enable-simd"]
-
-# Workspace configuration
-[workspace]
-members = ["."]
-resolver = "2"
-
-# Features for conditional compilation
 [features]
 default = ["desktop"]
-desktop = ["serialport"]
+desktop = []
 web = []
 android = []
 hardware = ["serialport"]
 
-# Library configuration
 [lib]
 name = "ballistics_analyzer"
 path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
-# Binary configuration - only for desktop
 [[bin]]
 name = "ballistics-analyzer"
 path = "src/main.rs"
 required-features = ["desktop"]
 
-# Build dependencies for vendoring
-[build-dependencies]
-cc = "1.0"
+# Force vendored/bundled builds
+[env]
+RUSQLITE_BUNDLED = "1"
+LIBSQLITE3_SYS_BUNDLING = "1"

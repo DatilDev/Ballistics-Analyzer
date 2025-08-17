@@ -11,74 +11,42 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  RUSQLITE_BUNDLED: 1
+  LIBSQLITE3_SYS_BUNDLING: 1
 
 jobs:
-  # Web/PWA Build
+  # PWA Build
   build-web:
     name: Build PWA
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
     
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
       with:
         targets: wasm32-unknown-unknown
         
-    - name: Cache cargo registry
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-web-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-web-
-        
     - name: Install wasm-pack
-      run: |
-        curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       
     - name: Build WASM
       run: |
-        # Build with web features
         wasm-pack build --target web --out-dir pkg --release \
           --no-default-features --features web
         
-    - name: Prepare dist directory
+    - name: Prepare dist
       run: |
-        mkdir -p dist/assets dist/pkg
+        mkdir -p dist
+        cp -r pkg dist/ || true
+        cp index.html dist/ || echo "No index.html"
+        cp manifest.json dist/ || echo "No manifest.json"
         
-        # Copy HTML and manifest files
-        [ -f index.html ] && cp index.html dist/
-        [ -f manifest.json ] && cp manifest.json dist/
-        [ -f sw.js ] && cp sw.js dist/
-        
-        # Copy assets if they exist
-        if [ -d assets ]; then
-          cp -r assets/* dist/assets/ 2>/dev/null || true
-        fi
-        
-        # Copy WASM build output
-        if [ -d pkg ]; then
-          cp -r pkg/* dist/pkg/
-        fi
-        
-    - name: Upload PWA artifacts
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: pwa-build
         path: dist/
-        retention-days: 7
-        
-    - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
 
   # Desktop Builds
   build-desktop:
@@ -90,26 +58,23 @@ jobs:
           - os: ubuntu-latest
             name: Linux
             target: x86_64-unknown-linux-gnu
-            artifact: ballistics-analyzer
-            artifact_name: ballistics-analyzer-linux
             
           - os: windows-latest
             name: Windows
             target: x86_64-pc-windows-msvc
-            artifact: ballistics-analyzer.exe
-            artifact_name: ballistics-analyzer-windows
             
           - os: macos-latest
-            name: macOS
+            name: macOS-x64
             target: x86_64-apple-darwin
-            artifact: ballistics-analyzer
-            artifact_name: ballistics-analyzer-macos
+            
+          - os: macos-latest
+            name: macOS-arm64
+            target: aarch64-apple-darwin
             
     runs-on: ${{ matrix.os }}
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
     
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
@@ -117,7 +82,7 @@ jobs:
         targets: ${{ matrix.target }}
         
     - name: Install Linux dependencies
-      if: matrix.os == 'ubuntu-latest'
+      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -128,137 +93,87 @@ jobs:
           libxcb-shape0-dev \
           libxcb-xfixes0-dev \
           libxkbcommon-dev \
-          libglu1-mesa-dev \
-          libudev-dev \
-          libsqlite3-dev
-        
-    - name: Cache cargo registry
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-desktop-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-desktop-
+          libglu1-mesa-dev
         
     - name: Build
-      run: |
-        cargo build --release --target ${{ matrix.target }} --features desktop
+      run: cargo build --release --target ${{ matrix.target }}
       env:
-        # Use vendored/bundled versions to avoid linking issues
         RUSQLITE_BUNDLED: 1
         LIBSQLITE3_SYS_BUNDLING: 1
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.artifact_name }}
-        path: target/${{ matrix.target }}/release/${{ matrix.artifact }}
-        retention-days: 7
+        name: ${{ matrix.name }}-build
+        path: |
+          target/${{ matrix.target }}/release/ballistics-analyzer*
+          !target/**/*.d
+          !target/**/*.rlib
 
-  # Arch Linux AUR Package Build
+  # Arch Linux Build
   build-arch:
-    name: Build Arch Linux Package
+    name: Build Arch Linux
     runs-on: ubuntu-latest
-    container:
-      image: archlinux:latest
+    container: archlinux:latest
     
     steps:
-    - name: Setup build environment
+    - name: Setup environment
       run: |
         pacman -Syu --noconfirm
-        pacman -S --noconfirm base-devel rust cargo git gtk3 pkgconf sqlite
+        pacman -S --noconfirm base-devel rust cargo git gtk3 pkgconf
         
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       
-    - name: Build package
+    - name: Build
       run: |
-        # Create non-root user for makepkg
-        useradd -m builder
-        chown -R builder:builder .
+        export RUSQLITE_BUNDLED=1
+        export LIBSQLITE3_SYS_BUNDLING=1
+        cargo build --release
         
-        # Build with bundled SQLite
-        su builder -c "RUSQLITE_BUNDLED=1 cargo build --release --features desktop"
-        
-    - name: Package binary
+    - name: Package
       run: |
-        mkdir -p package/usr/bin
-        cp target/release/ballistics-analyzer package/usr/bin/
-        tar czf ballistics-analyzer-arch.tar.gz -C package .
+        mkdir -p pkg/usr/bin
+        cp target/release/ballistics-analyzer pkg/usr/bin/
+        tar czf ballistics-analyzer-arch.tar.gz -C pkg .
         
-    - name: Upload Arch package
+    - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: ballistics-analyzer-arch
+        name: arch-build
         path: ballistics-analyzer-arch.tar.gz
-        retention-days: 7
 
-  # Android Build (Fixed)
+  # Android Build
   build-android:
     name: Build Android
     runs-on: ubuntu-latest
     continue-on-error: true
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
     
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
       with:
-        targets: aarch64-linux-android armv7-linux-androideabi
+        targets: aarch64-linux-android
         
-    - name: Setup Java
-      uses: actions/setup-java@v4
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
       with:
-        java-version: '17'
-        distribution: 'temurin'
-        
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-      with:
-        cmdline-tools-version: 11076708
-        
-    - name: Install Android NDK
-      run: |
-        sdkmanager "ndk;25.2.9519653" "build-tools;34.0.0" "platforms;android-34"
-        echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
-        echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
+        ndk-version: r25c
         
     - name: Install cargo-ndk
-      run: |
-        cargo install cargo-ndk --version 3.4.0
+      run: cargo install cargo-ndk
         
-    - name: Build Android libraries
+    - name: Build
       run: |
-        export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        cargo ndk -t arm64-v8a -t armeabi-v7a build --release \
+        cargo ndk -t arm64-v8a build --release \
           --no-default-features --features android
       env:
-        ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         RUSQLITE_BUNDLED: 1
         
-    - name: Package Android libraries
-      run: |
-        mkdir -p android-build/lib/arm64-v8a
-        mkdir -p android-build/lib/armeabi-v7a
-        
-        # Copy built libraries if they exist
-        [ -f target/aarch64-linux-android/release/libballistics_analyzer.so ] && \
-          cp target/aarch64-linux-android/release/libballistics_analyzer.so android-build/lib/arm64-v8a/ || \
-          echo "arm64 library not found"
-          
-        [ -f target/armv7-linux-androideabi/release/libballistics_analyzer.so ] && \
-          cp target/armv7-linux-androideabi/release/libballistics_analyzer.so android-build/lib/armeabi-v7a/ || \
-          echo "armv7 library not found"
-        
-    - name: Upload Android artifacts
+    - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: android-libs
-        path: android-build/
-        retention-days: 7
+        name: android-build
+        path: target/aarch64-linux-android/release/*.so
         if-no-files-found: warn

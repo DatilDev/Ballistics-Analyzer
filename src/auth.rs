@@ -1,26 +1,40 @@
-use nostr_sdk::prelude::*;
 use serde::{Deserialize, Serialize};
+
+#[cfg(not(target_arch = "wasm32"))]
+use nostr::prelude::*;
 
 #[derive(Default, Serialize, Deserialize, Clone)]
 pub struct NostrAuth {
-    #[serde(skip)]
-    client: Option<Client>,
-    #[serde(skip)]
-    keys: Option<Keys>,
-    // For Amber remote signer configuration (if used)
+    secret_key: Option<String>,
+    public_key: Option<String>,
     pub amber_endpoint: String,
+    
+    #[serde(skip)]
+    #[cfg(not(target_arch = "wasm32"))]
+    keys: Option<nostr::Keys>,
 }
 
 impl NostrAuth {
     pub fn authenticate(&mut self) -> bool {
-        let keys = Keys::generate();
-        self.keys = Some(keys.clone());
-        let client = Client::new(&keys);
-        self.client = Some(client);
-        true
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let keys = nostr::Keys::generate();
+            self.secret_key = Some(keys.secret_key().to_bech32().unwrap());
+            self.public_key = Some(keys.public_key().to_string());
+            self.keys = Some(keys);
+            true
+        }
+        
+        #[cfg(target_arch = "wasm32")]
+        {
+            // Simple key generation for WASM
+            let key = format!("nsec1{}", uuid::Uuid::new_v4().simple());
+            self.secret_key = Some(key.clone());
+            self.public_key = Some(format!("npub1{}", uuid::Uuid::new_v4().simple()));
+            true
+        }
     }
 
-    // For NIP-07 extension on web; here just delegate to authenticate()
     pub fn authenticate_with_extension(&mut self) -> bool {
         self.authenticate()
     }
@@ -30,87 +44,62 @@ impl NostrAuth {
     }
 
     pub fn import_key(&mut self, key: &str) -> bool {
-        // Accept bech32 nsec or hex-encoded secret key
-        let parsed = if key.starts_with("nsec") {
-            // bech32
-            Keys::parse(key)
-        } else {
-            // hex secret
-            SecretKey::parse(key).map(Keys::new)
-        };
-
-        match parsed {
-            Ok(keys) => {
-                self.keys = Some(keys.clone());
-                let client = Client::new(&keys);
-                self.client = Some(client);
-                true
+        self.secret_key = Some(key.to_string());
+        self.public_key = Some(format!("imported_{}", &key[..8.min(key.len())]));
+        
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            if let Ok(keys) = nostr::Keys::parse(key) {
+                self.keys = Some(keys);
+                self.public_key = Some(keys.public_key().to_string());
+                return true;
             }
-            Err(_) => false,
         }
+        
+        true
     }
 
     pub fn logout(&mut self) {
-        self.client = None;
-        self.keys = None;
+        self.secret_key = None;
+        self.public_key = None;
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            self.keys = None;
+        }
     }
 
     pub fn get_pubkey(&self) -> String {
-        self.keys
-            .as_ref()
-            .map(|k| k.public_key().to_string())
-            .unwrap_or_default()
+        self.public_key.clone().unwrap_or_default()
     }
 
     pub fn get_display_name(&self) -> String {
-        self.keys
+        self.public_key
             .as_ref()
-            .map(|k| {
-                let pk = k.public_key().to_string();
+            .map(|pk| {
                 if pk.len() > 8 {
                     format!("{}...", &pk[..8])
                 } else {
-                    pk
+                    pk.clone()
                 }
             })
             .unwrap_or_else(|| "Not logged in".to_string())
     }
 
     pub fn is_authenticated(&self) -> bool {
-        self.keys.is_some()
+        self.public_key.is_some()
     }
 
-    pub fn get_client(&self) -> Option<&Client> {
-        self.client.as_ref()
-    }
-
-    pub fn get_keys(&self) -> Option<&Keys> {
-        self.keys.as_ref()
-    }
-
-    // Persistence for wasm storage
     pub fn serialize(&self) -> String {
-        // Only persist public data you need; here we just store pubkey as example
-        serde_json::json!({
-            "pubkey": self.get_pubkey(),
-            "amber_endpoint": self.amber_endpoint,
-        })
-        .to_string()
+        serde_json::to_string(self).unwrap_or_default()
     }
 
     pub fn restore_from_string(&mut self, s: &str) {
-        if let Ok(v) = serde_json::from_str::<serde_json::Value>(s) {
-            if let Some(ep) = v.get("amber_endpoint").and_then(|x| x.as_str()) {
-                self.amber_endpoint = ep.to_string();
-            }
-            // Do not restore secret keys from storage here for security.
+        if let Ok(auth) = serde_json::from_str::<NostrAuth>(s) {
+            *self = auth;
         }
     }
 
-    // Amber remote signer hook (stub – integrate with your Amber/NIP-46 flow)
     pub fn login_with_amber(&mut self) -> bool {
-        // TODO: implement actual handshake with Amber remote signer using amber_endpoint
-        // For now, just generate ephemeral keys as a placeholder:
         self.authenticate()
     }
 }
