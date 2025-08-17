@@ -141,6 +141,7 @@ resolver = "2"
 default = ["desktop"]
 desktop = []
 web = []
+android = []
 
 # Library configuration
 [lib]

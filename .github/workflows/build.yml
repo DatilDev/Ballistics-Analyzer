@@ -40,19 +40,29 @@ jobs:
     - name: Install wasm-pack
       run: |
         curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+    
+    - name: Install wasm32 target
+      run: rustup target add wasm32-unknown-unknown
       
     - name: Build WASM
       run: |
-        wasm-pack build --target web --out-dir pkg --release --no-default-features --features web
+        # Build with wasm-pack, handling potential errors
+        wasm-pack build --target web --out-dir pkg --release --no-typescript -- --no-default-features --features web || {
+          echo "wasm-pack build failed, trying cargo build directly"
+          cargo build --target wasm32-unknown-unknown --release --no-default-features --features web
+          # Manual wasm-bindgen if wasm-pack fails
+          cargo install wasm-bindgen-cli
+          wasm-bindgen --target web --out-dir pkg target/wasm32-unknown-unknown/release/ballistics_analyzer.wasm
+        }
         
     - name: Prepare dist directory
       run: |
         mkdir -p dist/assets dist/pkg
         
         # Copy HTML and manifest files
-        [ -f index.html ] && cp index.html dist/ || echo "Creating default index.html"
-        [ -f manifest.json ] && cp manifest.json dist/ || echo "Creating default manifest.json"
-        [ -f sw.js ] && cp sw.js dist/ || echo "Creating default service worker"
+        [ -f index.html ] && cp index.html dist/ || echo "No index.html found"
+        [ -f manifest.json ] && cp manifest.json dist/ || echo "No manifest.json found"
+        [ -f sw.js ] && cp sw.js dist/ || echo "No service worker found"
         
         # Copy assets if they exist
         if [ -d assets ]; then
@@ -61,33 +71,40 @@ jobs:
         
         # Copy WASM build output
         if [ -d pkg ]; then
-          cp -r pkg/* dist/pkg/
+          cp -r pkg/* dist/pkg/ 2>/dev/null || true
         fi
         
-    - name: Create default index.html if missing
+    - name: Create default PWA files if missing
       run: |
+        # Create index.html if missing
         if [ ! -f dist/index.html ]; then
           cat > dist/index.html << 'HTML_END'
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Ballistics Analyzer</title>
             <link rel="manifest" href="manifest.json">
+            <meta name="theme-color" content="#1a1a1a">
             <style>
-                body { margin: 0; padding: 0; background: #1a1a1a; color: white; font-family: sans-serif; }
-                #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+                body { margin: 0; background: #1a1a1a; color: white; font-family: system-ui, sans-serif; }
+                #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
                 canvas { width: 100%; height: 100%; }
             </style>
         </head>
         <body>
-            <div id="loading">Loading Ballistics Analyzer...</div>
+            <div id="loading">
+                <h1>🎯 Ballistics Analyzer</h1>
+                <p>Loading application...</p>
+            </div>
             <canvas id="ballistics_canvas"></canvas>
             <script type="module">
                 import init from './pkg/ballistics_analyzer.js';
                 init().then(() => {
                     document.getElementById('loading').style.display = 'none';
+                }).catch(err => {
+                    document.getElementById('loading').innerHTML = '<h2>Error loading app</h2><p>' + err + '</p>';
                 });
             </script>
         </body>
@@ -95,8 +112,7 @@ jobs:
         HTML_END
         fi
         
-    - name: Create default manifest.json if missing
-      run: |
+        # Create manifest.json if missing
         if [ ! -f dist/manifest.json ]; then
           cat > dist/manifest.json << 'JSON_END'
         {
@@ -109,12 +125,12 @@ jobs:
           "theme_color": "#1a1a1a",
           "icons": [
             {
-              "src": "assets/icon-192.png",
+              "src": "assets/icon-192x192.png",
               "sizes": "192x192",
               "type": "image/png"
             },
             {
-              "src": "assets/icon-512.png",
+              "src": "assets/icon-512x512.png",
               "sizes": "512x512",
               "type": "image/png"
             }
@@ -123,8 +139,7 @@ jobs:
         JSON_END
         fi
         
-    - name: Create default service worker if missing
-      run: |
+        # Create service worker if missing
         if [ ! -f dist/sw.js ]; then
           cat > dist/sw.js << 'JS_END'
         const CACHE_NAME = 'ballistics-v1';
@@ -138,18 +153,24 @@ jobs:
         
         self.addEventListener('install', event => {
           event.waitUntil(
-            caches.open(CACHE_NAME)
-              .then(cache => cache.addAll(urlsToCache))
+            caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
           );
         });
         
         self.addEventListener('fetch', event => {
           event.respondWith(
-            caches.match(event.request)
-              .then(response => response || fetch(event.request))
+            caches.match(event.request).then(response => response || fetch(event.request))
           );
         });
         JS_END
+        fi
+        
+        # Create placeholder icons if missing
+        if [ ! -f dist/assets/icon-192x192.png ]; then
+          mkdir -p dist/assets
+          # Create a minimal 1x1 PNG as placeholder
+          printf '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\xb8\x91\x8d\x18\x00\x00\x00\x00IEND\xaeB`\x82' > dist/assets/icon-192x192.png
+          cp dist/assets/icon-192x192.png dist/assets/icon-512x512.png
         fi
         
     - name: Upload PWA artifacts
@@ -160,13 +181,14 @@ jobs:
         retention-days: 7
         
     - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./dist
+        cname: ${{ vars.CNAME }}
 
-  # Desktop Builds
+  # Desktop Builds - Windows, macOS, Linux
   build-desktop:
     name: Build ${{ matrix.name }}
     strategy:
@@ -177,19 +199,25 @@ jobs:
             name: Linux
             target: x86_64-unknown-linux-gnu
             artifact: ballistics-analyzer
-            artifact_name: ballistics-analyzer-linux
+            artifact_name: ballistics-analyzer-linux-x64
             
           - os: windows-latest
             name: Windows
             target: x86_64-pc-windows-msvc
             artifact: ballistics-analyzer.exe
-            artifact_name: ballistics-analyzer-windows
+            artifact_name: ballistics-analyzer-windows-x64
             
           - os: macos-latest
-            name: macOS
+            name: macOS-x64
             target: x86_64-apple-darwin
             artifact: ballistics-analyzer
-            artifact_name: ballistics-analyzer-macos
+            artifact_name: ballistics-analyzer-macos-x64
+            
+          - os: macos-latest
+            name: macOS-arm64
+            target: aarch64-apple-darwin
+            artifact: ballistics-analyzer
+            artifact_name: ballistics-analyzer-macos-arm64
             
     runs-on: ${{ matrix.os }}
     
@@ -214,7 +242,10 @@ jobs:
           libxcb-shape0-dev \
           libxcb-xfixes0-dev \
           libxkbcommon-dev \
-          libglu1-mesa-dev
+          libglu1-mesa-dev \
+          libasound2-dev \
+          libfontconfig1-dev \
+          libfreetype6-dev
         
     - name: Cache cargo registry
       uses: actions/cache@v4
@@ -238,7 +269,76 @@ jobs:
         path: target/${{ matrix.target }}/release/${{ matrix.artifact }}
         retention-days: 7
 
-  # Arch Linux AUR Package Build
+  # Debian Package Build
+  build-debian:
+    name: Build Debian Package
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libgtk-3-dev \
+          libssl-dev \
+          pkg-config \
+          libxcb-render0-dev \
+          libxcb-shape0-dev \
+          libxcb-xfixes0-dev \
+          libxkbcommon-dev \
+          libglu1-mesa-dev \
+          dpkg-dev \
+          debhelper \
+          fakeroot
+    
+    - name: Install cargo-deb
+      run: cargo install cargo-deb
+      
+    - name: Create Debian metadata
+      run: |
+        mkdir -p debian
+        
+        # Add Debian metadata to Cargo.toml if not present
+        if ! grep -q "package.metadata.deb" Cargo.toml; then
+          cat >> Cargo.toml << 'TOML_END'
+        
+        [package.metadata.deb]
+        maintainer = "Ballistics Analyzer Team <support@datildev.com>"
+        copyright = "2025, Ballistics Analyzer Contributors"
+        license-file = ["LICENSE", "4"]
+        extended-description = """\
+        Professional ballistics calculator with hardware integration.
+        Calculate accurate firing solutions with real-time environmental data."""
+        depends = "$auto"
+        section = "utils"
+        priority = "optional"
+        assets = [
+            ["target/release/ballistics-analyzer", "usr/bin/", "755"],
+            ["README.md", "usr/share/doc/ballistics-analyzer/README", "644"],
+            ["LICENSE", "usr/share/doc/ballistics-analyzer/LICENSE", "644"],
+        ]
+        TOML_END
+        fi
+        
+    - name: Build Debian package
+      run: |
+        cargo build --release --features desktop
+        cargo deb --no-build
+        
+    - name: Upload Debian package
+      uses: actions/upload-artifact@v4
+      with:
+        name: ballistics-analyzer-debian
+        path: target/debian/*.deb
+        retention-days: 7
+
+  # Arch Linux AUR Package Build (Already working)
   build-arch:
     name: Build Arch Linux Package
     runs-on: ubuntu-latest
@@ -263,11 +363,11 @@ jobs:
         pkgrel=1
         pkgdesc="Professional ballistics calculator with hardware integration"
         arch=('x86_64' 'aarch64')
-        url="https://github.com/ballistics-analyzer/ballistics-analyzer"
+        url="https://github.com/DatilDev/Ballistics-Analyzer"
         license=('MIT')
         depends=('gtk3' 'openssl')
         makedepends=('rust' 'cargo' 'git')
-        source=("git+https://github.com/ballistics-analyzer/ballistics-analyzer.git#tag=v${pkgver}")
+        source=("$pkgname::git+https://github.com/DatilDev/Ballistics-Analyzer.git")
         sha256sums=('SKIP')
         
         build() {
@@ -303,10 +403,7 @@ jobs:
         chown -R builder:builder .
         
         # Build as non-root user
-        su builder -c "makepkg -s --noconfirm || true"
-        
-        # Check if package was created
-        ls -la *.pkg.tar.* || echo "No package files created"
+        su builder -c "makepkg -s --noconfirm"
         
     - name: Upload Arch package
       uses: actions/upload-artifact@v4
@@ -316,11 +413,10 @@ jobs:
         retention-days: 7
         if-no-files-found: warn
 
-  # Android Build (Optional)
+  # Android Build
   build-android:
-    name: Build Android
+    name: Build Android Libraries
     runs-on: ubuntu-latest
-    continue-on-error: true
     
     steps:
     - name: Checkout code
@@ -329,7 +425,7 @@ jobs:
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
       with:
-        targets: aarch64-linux-android armv7-linux-androideabi
+        targets: aarch64-linux-android, armv7-linux-androideabi, i686-linux-android, x86_64-linux-android
         
     - name: Setup Java
       uses: actions/setup-java@v4
@@ -339,12 +435,10 @@ jobs:
         
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
-      with:
-        cmdline-tools-version: 11076708
-        
+      
     - name: Install Android NDK
       run: |
-        sdkmanager "ndk;25.2.9519653" "build-tools;34.0.0" "platforms;android-34"
+        sdkmanager --install "ndk;25.2.9519653" "build-tools;34.0.0" "platforms;android-34"
         echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
         echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
         
@@ -356,46 +450,70 @@ jobs:
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-android-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-android-
         
     - name: Install cargo-ndk
-      run: |
-        cargo install cargo-ndk --version 3.4.0
+      run: cargo install cargo-ndk
         
     - name: Build Android libraries
       run: |
         export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-        cargo ndk -t arm64-v8a -t armeabi-v7a build --release --no-default-features --features android
+        cargo ndk -t arm64-v8a -t armeabi-v7a -t x86 -t x86_64 build --release --no-default-features --features android
       env:
         ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         
     - name: Package Android libraries
       run: |
-        mkdir -p android-build/lib/arm64-v8a
-        mkdir -p android-build/lib/armeabi-v7a
+        mkdir -p android-build/jniLibs/arm64-v8a
+        mkdir -p android-build/jniLibs/armeabi-v7a
+        mkdir -p android-build/jniLibs/x86
+        mkdir -p android-build/jniLibs/x86_64
         
-        # Copy built libraries if they exist
+        # Copy built libraries
         [ -f target/aarch64-linux-android/release/libballistics_analyzer.so ] && \
-          cp target/aarch64-linux-android/release/libballistics_analyzer.so android-build/lib/arm64-v8a/ || \
+          cp target/aarch64-linux-android/release/libballistics_analyzer.so android-build/jniLibs/arm64-v8a/ || \
           echo "arm64 library not found"
           
         [ -f target/armv7-linux-androideabi/release/libballistics_analyzer.so ] && \
-          cp target/armv7-linux-androideabi/release/libballistics_analyzer.so android-build/lib/armeabi-v7a/ || \
+          cp target/armv7-linux-androideabi/release/libballistics_analyzer.so android-build/jniLibs/armeabi-v7a/ || \
           echo "armv7 library not found"
+          
+        [ -f target/i686-linux-android/release/libballistics_analyzer.so ] && \
+          cp target/i686-linux-android/release/libballistics_analyzer.so android-build/jniLibs/x86/ || \
+          echo "x86 library not found"
+          
+        [ -f target/x86_64-linux-android/release/libballistics_analyzer.so ] && \
+          cp target/x86_64-linux-android/release/libballistics_analyzer.so android-build/jniLibs/x86_64/ || \
+          echo "x86_64 library not found"
+        
+        # Create JNI wrapper
+        cat > android-build/BallisticsAnalyzer.java << 'JAVA_END'
+        package com.datildev.ballistics;
+        
+        public class BallisticsAnalyzer {
+            static {
+                System.loadLibrary("ballistics_analyzer");
+            }
+            
+            public native String calculate(String projectileData);
+            public native String getVersion();
+        }
+        JAVA_END
+        
+        # Package as AAR
+        cd android-build
+        zip -r ../ballistics-analyzer-android.aar .
         
     - name: Upload Android artifacts
       uses: actions/upload-artifact@v4
       with:
         name: android-libs
-        path: android-build/
+        path: ballistics-analyzer-android.aar
         retention-days: 7
-        if-no-files-found: warn
 
   # Create Release
   create-release:
     name: Create Release
-    needs: [build-web, build-desktop, build-arch]
+    needs: [build-web, build-desktop, build-debian, build-arch, build-android]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
@@ -404,7 +522,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+      
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
@@ -415,24 +533,43 @@ jobs:
         mkdir -p release
         
         # Windows executable
-        if [ -f "artifacts/ballistics-analyzer-windows/ballistics-analyzer.exe" ]; then
-          cp artifacts/ballistics-analyzer-windows/ballistics-analyzer.exe release/ballistics-analyzer-windows.exe
+        if [ -f "artifacts/ballistics-analyzer-windows-x64/ballistics-analyzer.exe" ]; then
+          cp artifacts/ballistics-analyzer-windows-x64/ballistics-analyzer.exe release/ballistics-analyzer-windows-x64.exe
           echo "✓ Windows build found"
         fi
         
         # Linux executable
-        if [ -f "artifacts/ballistics-analyzer-linux/ballistics-analyzer" ]; then
-          cp artifacts/ballistics-analyzer-linux/ballistics-analyzer release/ballistics-analyzer-linux
-          chmod +x release/ballistics-analyzer-linux
+        if [ -f "artifacts/ballistics-analyzer-linux-x64/ballistics-analyzer" ]; then
+          cp artifacts/ballistics-analyzer-linux-x64/ballistics-analyzer release/ballistics-analyzer-linux-x64
+          chmod +x release/ballistics-analyzer-linux-x64
+          # Create tarball
+          tar czf release/ballistics-analyzer-linux-x64.tar.gz -C artifacts/ballistics-analyzer-linux-x64 ballistics-analyzer
           echo "✓ Linux build found"
         fi
         
-        # macOS executable
-        if [ -f "artifacts/ballistics-analyzer-macos/ballistics-analyzer" ]; then
-          cp artifacts/ballistics-analyzer-macos/ballistics-analyzer release/ballistics-analyzer-macos
-          chmod +x release/ballistics-analyzer-macos
-          echo "✓ macOS build found"
+        # macOS executables
+        if [ -f "artifacts/ballistics-analyzer-macos-x64/ballistics-analyzer" ]; then
+          cp artifacts/ballistics-analyzer-macos-x64/ballistics-analyzer release/ballistics-analyzer-macos-x64
+          chmod +x release/ballistics-analyzer-macos-x64
+          tar czf release/ballistics-analyzer-macos-x64.tar.gz -C artifacts/ballistics-analyzer-macos-x64 ballistics-analyzer
+          echo "✓ macOS Intel build found"
         fi
+        
+        if [ -f "artifacts/ballistics-analyzer-macos-arm64/ballistics-analyzer" ]; then
+          cp artifacts/ballistics-analyzer-macos-arm64/ballistics-analyzer release/ballistics-analyzer-macos-arm64
+          chmod +x release/ballistics-analyzer-macos-arm64
+          tar czf release/ballistics-analyzer-macos-arm64.tar.gz -C artifacts/ballistics-analyzer-macos-arm64 ballistics-analyzer
+          echo "✓ macOS ARM build found"
+        fi
+        
+        # Debian package
+        for deb in artifacts/ballistics-analyzer-debian/*.deb; do
+          if [ -f "$deb" ]; then
+            cp "$deb" release/
+            echo "✓ Debian package found"
+            break
+          fi
+        done
         
         # Arch Linux package
         for pkg in artifacts/ballistics-analyzer-arch/*.pkg.tar.*; do
@@ -451,16 +588,15 @@ jobs:
           echo "✓ PWA build found"
         fi
         
-        # Android libraries (if available)
-        if [ -d "artifacts/android-libs" ] && [ "$(ls -A artifacts/android-libs)" ]; then
-          cd artifacts/android-libs
-          zip -r ../../release/ballistics-analyzer-android-libs.zip .
-          cd ../..
+        # Android AAR
+        if [ -f "artifacts/android-libs/ballistics-analyzer-android.aar" ]; then
+          cp artifacts/android-libs/ballistics-analyzer-android.aar release/
           echo "✓ Android libraries found"
         fi
         
+        echo ""
         echo "Release contents:"
-        ls -la release/
+        ls -lah release/
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
@@ -474,31 +610,64 @@ jobs:
         body: |
           ## 🎯 Ballistics Analyzer ${{ github.ref_name }}
           
-          ### 📦 Installation Options
+          ### 📦 Downloads
           
-          #### 🌐 Progressive Web App (Recommended)
-          Visit [Ballistics Analyzer PWA](https://${{ github.repository_owner }}.github.io/ballistics-analyzer/)
-          - Works on all devices
-          - Install as native app
+          #### 🌐 Web App (PWA)
+          **[Launch Web App →](https://datildev.github.io/Ballistics-Analyzer/)**
+          - Works on all devices with a modern browser
+          - Install as native app from browser menu
           - Automatic updates
-          - Offline support
+          - Works offline
           
           #### 💻 Desktop Applications
-          - **Windows**: Download `ballistics-analyzer-windows.exe`
-          - **macOS**: Download `ballistics-analyzer-macos`
-          - **Linux**: Download `ballistics-analyzer-linux`
-          - **Arch Linux**: Install via `ballistics-analyzer-*.pkg.tar.zst`
+          | Platform | Architecture | Download |
+          |----------|-------------|----------|
+          | Windows | x64 | [ballistics-analyzer-windows-x64.exe](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ballistics-analyzer-windows-x64.exe) |
+          | macOS | Intel | [ballistics-analyzer-macos-x64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ballistics-analyzer-macos-x64.tar.gz) |
+          | macOS | Apple Silicon | [ballistics-analyzer-macos-arm64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ballistics-analyzer-macos-arm64.tar.gz) |
+          | Linux | x64 | [ballistics-analyzer-linux-x64.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ballistics-analyzer-linux-x64.tar.gz) |
+          
+          #### 📦 Linux Packages
+          - **Debian/Ubuntu**: `ballistics-analyzer_*.deb`
+          - **Arch Linux**: `ballistics-analyzer-*.pkg.tar.zst`
           
           #### 📱 Mobile
-          - **All Platforms**: Use the PWA version above
-          - **Android**: APK coming soon (libraries available for developers)
+          - **Android**: Developer AAR library included
+          - **iOS**: Use the PWA version
           
-          ### 🚀 Quick Start
-          1. Download the appropriate file for your platform
-          2. Make executable (Linux/macOS): `chmod +x ballistics-analyzer-*`
-          3. Run the application
-          4. Generate or import your Nostr keys
-          5. Start calculating trajectories!
+          ### 🚀 Installation
+          
+          **Windows:**
+          ```powershell
+          # Download and run the .exe file
+          ./ballistics-analyzer-windows-x64.exe
+          ```
+          
+          **macOS:**
+          ```bash
+          # Extract and run
+          tar xzf ballistics-analyzer-macos-*.tar.gz
+          ./ballistics-analyzer
+          ```
+          
+          **Linux (Binary):**
+          ```bash
+          tar xzf ballistics-analyzer-linux-x64.tar.gz
+          chmod +x ballistics-analyzer
+          ./ballistics-analyzer
+          ```
+          
+          **Debian/Ubuntu:**
+          ```bash
+          sudo dpkg -i ballistics-analyzer_*.deb
+          # Or with apt to resolve dependencies
+          sudo apt install ./ballistics-analyzer_*.deb
+          ```
+          
+          **Arch Linux:**
+          ```bash
+          sudo pacman -U ballistics-analyzer-*.pkg.tar.zst
+          ```
           
           ### 📋 What's New
           See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
@@ -507,4 +676,4 @@ jobs:
           Please report issues at [GitHub Issues](https://github.com/${{ github.repository }}/issues)
           
           ---
-          **Note**: First-time users should try the PWA version for the best experience!
+          **Note**: First-time users should try the [PWA version](https://datildev.github.io/Ballistics-Analyzer/) for the best experience!
