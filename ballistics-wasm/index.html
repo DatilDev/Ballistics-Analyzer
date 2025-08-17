@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Professional ballistics calculator PWA">
+    <meta name="theme-color" content="#2e7d32">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ballistics">
+    
+    <title>Ballistics Analyzer</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Prevent zoom on mobile -->
+    <script>
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+    </script>
+</head>
+<body>
+    <!-- Loading screen -->
+    <div id="loading" class="loading-screen">
+        <div class="loader"></div>
+        <p>Loading Ballistics Analyzer...</p>
+    </div>
+    
+    <!-- Canvas for egui -->
+    <canvas id="ballistics_canvas"></canvas>
+    
+    <!-- Offline notification -->
+    <div id="offline-notification" class="offline-notification" style="display: none;">
+        You are currently offline. Changes will be synced when connection is restored.
+    </div>
+    
+    <!-- Install prompt -->
+    <div id="install-prompt" class="install-prompt" style="display: none;">
+        <p>Install Ballistics Analyzer for offline access</p>
+        <button onclick="installPWA()">Install</button>
+        <button onclick="dismissInstall()">Not Now</button>
+    </div>
+    
+    <script>
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker registered', reg))
+                .catch(err => console.error('Service Worker registration failed', err));
+        }
+        
+        // Install prompt
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-prompt').style.display = 'block';
+        });
+        
+        function installPWA() {
+            document.getElementById('install-prompt').style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                deferredPrompt = null;
+            });
+        }
+        
+        function dismissInstall() {
+            document.getElementById('install-prompt').style.display = 'none';
+        }
+        
+        // Online/Offline detection
+        window.addEventListener('online', () => {
+            document.getElementById('offline-notification').style.display = 'none';
+        });
+        
+        window.addEventListener('offline', () => {
+            document.getElementById('offline-notification').style.display = 'block';
+        });
+    </script>
+    
+    <!-- Load WASM module -->
+    <script type="module">
+        import init from './pkg/ballistics_wasm.js';
+        
+        async function run() {
+            await init();
+            
+            // Hide loading screen
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        run();
+    </script>
+</body>
+</html>
