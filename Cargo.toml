@@ -10,9 +10,9 @@ keywords = ["ballistics", "trajectory", "shooting", "calculator", "nostr"]
 categories = ["science", "simulation"]
 
 [dependencies]
-# Core GUI framework
-egui = "0.28"
-egui_extras = "0.28"
+# Core GUI framework - using consistent versions
+egui = "0.29"
+egui_extras = "0.29"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -20,8 +20,8 @@ serde_json = "1.0"
 
 # Utilities with proper WASM support
 chrono = { version = "0.4", features = ["serde", "wasmbind"] }
-uuid = { version = "1.10", features = ["v4", "serde", "js"] }  # js feature for WASM
-rand = { version = "0.8", features = ["getrandom"] }  # getrandom for WASM
+uuid = { version = "1.10", features = ["v4", "serde", "js"] }
+rand = { version = "0.8", features = ["getrandom"] }
 anyhow = "1.0"
 thiserror = "1.0"
 base64 = "0.22"
@@ -33,10 +33,10 @@ futures = "0.3"
 getrandom = { version = "0.2", features = ["js"] }
 
 # Desktop-only dependencies
-[target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
-# GUI framework for desktop
-eframe = "0.28"
-egui_plot = "0.28"
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# GUI framework for desktop - using latest stable version
+eframe = { version = "0.29", default-features = true }
+egui_plot = "0.29"
 
 # Logging
 env_logger = "0.11"
@@ -44,7 +44,7 @@ tracing = "0.1"
 
 # File system and database
 rusqlite = { version = "0.32", features = ["bundled"] }
-rfd = "0.14"
+rfd = "0.15"
 dirs = "5.0"
 
 # Nostr protocol
@@ -63,29 +63,18 @@ arboard = "3.4"
 # Serial port communication (for hardware)
 serialport = "4.5"
 
-# Android-specific dependencies 
-
-[target.'cfg(target_os = "android")'.dependencies]
- android-activity = { version = "0.6.0", features = ["native-activity"] }
- android_logger = "0.15.1"
- jni = "0.21.1"
- ndk = "0.9.0"
- ndk-sys = "0.6.0+11769913"
- ndk-context = "0.1.1"
- winit = { version = "0.30.12", features = ["android-native-activity"] }
- raw-window-handle = "0.6"
-
 # Web/WASM-specific dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-eframe = { version = "0.28", default-features = false, features = ["web"] }
-egui_plot = "0.28"
+# For web, we need eframe with glow rendering
+eframe = { version = "0.29", default-features = false, features = ["default_fonts", "glow"] }
+egui_plot = "0.29"
 
 # WASM bindings
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 
 # Web APIs
-web-sys = { version = "0.3.77", features = [
+web-sys = { version = "0.3", features = [
     "Window",
     "Document",
     "Element",
@@ -120,10 +109,6 @@ criterion = "0.5"
 pretty_assertions = "1.4"
 tempfile = "3.12"
 
-# Build dependencies
-[build-dependencies]
-# None needed currently
-
 # Profile configurations
 [profile.dev]
 opt-level = 0
@@ -135,11 +120,10 @@ lto = true
 codegen-units = 1
 strip = true
 
-# WASM-specific release profile
-[profile.wasm-release]
+[profile.wasm]
 inherits = "release"
-opt-level = "z"  # Optimize for size
-lto = "fat"
+opt-level = "z"
+lto = true
 panic = "abort"
 
 # Package metadata for wasm-pack
@@ -151,18 +135,11 @@ panic = "abort"
 members = ["."]
 resolver = "2"
 
-# REMOVED THE PROBLEMATIC PATCH SECTION
-# Patches cannot point to the same source they're patching
-
 # Features for conditional compilation
 [features]
 default = ["desktop"]
 desktop = []
 web = []
-android = []  # Currently disabled
-hardware = []
-bluetooth = []
-debug-ui = []
 
 # Library configuration
 [lib]
