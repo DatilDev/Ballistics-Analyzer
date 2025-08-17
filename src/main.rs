@@ -159,6 +159,7 @@ impl BallisticsApp {
                 timestamp: Utc::now().to_rfc3339(),
             },
             key_input_buffer: String::new(),
+            load_library: LoadDataLibrary::new(),
             ..Default::default()
         };
 
