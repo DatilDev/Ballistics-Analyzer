@@ -25,16 +25,15 @@ rand = { version = "0.8", features = ["getrandom"] }
 anyhow = "1.0"
 thiserror = "1.0"
 base64 = "0.22"
-
-# Async runtime
 futures = "0.3"
+hex = "0.4"
 
 # Required for WASM random number generation
 getrandom = { version = "0.2", features = ["js"] }
 
 # Desktop-only dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-# GUI framework for desktop - using latest stable version
+# GUI framework for desktop
 eframe = { version = "0.29", default-features = true }
 egui_plot = "0.29"
 webbrowser = "1.0"
@@ -43,13 +42,20 @@ webbrowser = "1.0"
 env_logger = "0.11"
 tracing = "0.1"
 
-# File system and database
-rusqlite = { version = "0.32", features = ["bundled"] }
+# Database with vendored SQLite to avoid linking issues
+rusqlite = { version = "0.32", features = ["bundled", "modern-full"] }
 rfd = "0.15"
 dirs = "5.0"
 
-# Nostr protocol
-nostr-sdk = "0.35"
+# Nostr protocol with vendored secp256k1
+nostr-sdk = { version = "0.35", default-features = false, features = [
+    "nip04", 
+    "nip44", 
+    "nip46", 
+    "nip07",
+    "sqlite",
+    "rustls-tls-native"
+] }
 
 # Async runtime for desktop
 tokio = { version = "1.40", features = ["full"] }
@@ -61,8 +67,8 @@ image = { version = "0.25", default-features = false, features = ["png", "jpeg"]
 # Clipboard support
 arboard = "3.4"
 
-# Serial port communication (for hardware)
-serialport = "4.5"
+# Serial port communication (for hardware) - optional
+serialport = { version = "4.5", optional = true }
 
 # Web/WASM-specific dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -73,6 +79,14 @@ egui_plot = "0.29"
 # WASM bindings
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
+
+# Nostr for WASM (lighter version)
+nostr-sdk = { version = "0.35", default-features = false, features = [
+    "nip04",
+    "nip07",
+    "indexeddb",
+    "webpki"
+] }
 
 # Web APIs
 web-sys = { version = "0.3", features = [
@@ -103,6 +117,11 @@ web-sys = { version = "0.3", features = [
 # Error handling and logging for WASM
 console_error_panic_hook = "0.1"
 tracing-wasm = "0.2"
+
+# Android-specific dependencies
+[target.'cfg(target_os = "android")'.dependencies]
+android-activity = { version = "0.6", features = ["native-activity"] }
+android_logger = "0.14"
 
 # Development dependencies
 [dev-dependencies]
@@ -139,9 +158,10 @@ resolver = "2"
 # Features for conditional compilation
 [features]
 default = ["desktop"]
-desktop = []
+desktop = ["serialport"]
 web = []
 android = []
+hardware = ["serialport"]
 
 # Library configuration
 [lib]
@@ -154,3 +174,7 @@ crate-type = ["cdylib", "rlib"]
 name = "ballistics-analyzer"
 path = "src/main.rs"
 required-features = ["desktop"]
+
+# Build dependencies for vendoring
+[build-dependencies]
+cc = "1.0"
