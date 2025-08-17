@@ -273,7 +273,7 @@ impl eframe::App for BallisticsApp {
                 Screen::LoadLibrary => self.show_load_library_screen(ui),
                 Screen::Sharing => self.show_sharing_screen(ui),
                 Screen::Settings => self.show_settings_screen(ui),
-                Screen::About => todo!(),
+                Screen::About => self.show_about_screen(ui),
             }
         });
     }
@@ -512,7 +512,9 @@ impl BallisticsApp {
 
         ui.separator();
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
+        egui::ScrollArea::vertical()
+    .id_source("analysis_scroll")
+    .show(ui, |ui| {
             self.show_projectile_data_section(ui);
             self.show_environmental_conditions_section(ui);
             self.show_notes_photos_section(ui);
@@ -735,7 +737,9 @@ impl BallisticsApp {
 
         ui.separator();
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
+        egui::ScrollArea::vertical()
+    .id_source("profiles_scroll")
+    .show(ui, |ui| {
             let mut to_remove: Option<usize> = None;
             let mut to_duplicate: Option<usize> = None;
 
@@ -855,7 +859,7 @@ impl BallisticsApp {
         }
     }
 
-fn show_history_screen(&mut self, ui: &mut egui::Ui) {
+    fn show_history_screen(&mut self, ui: &mut egui::Ui) {
     ui.heading("📜 Calculation History");
 
     ui.horizontal(|ui| {
@@ -868,7 +872,9 @@ fn show_history_screen(&mut self, ui: &mut egui::Ui) {
 
     ui.separator();
 
-    egui::ScrollArea::vertical().show(ui, |ui| {
+    egui::ScrollArea::vertical()
+    .id_source("history_scroll")
+    .show(ui, |ui| {
         let mut to_delete = None;
         let mut to_load = None;
         let mut to_duplicate = None;
@@ -955,7 +961,6 @@ fn show_history_screen(&mut self, ui: &mut egui::Ui) {
     });
 }
 
-
     fn show_load_library_screen(&mut self, ui: &mut egui::Ui) {
         ui.heading("📚 Ammunition Load Library");
 
@@ -985,7 +990,9 @@ fn show_history_screen(&mut self, ui: &mut egui::Ui) {
         if let Some(loads) = self.load_library
             .get_loads_for_manufacturer(&self.load_library.selected_manufacturer)
         {
-            egui::ScrollArea::vertical().show(ui, |ui| {
+            egui::ScrollArea::vertical()
+    .id_source("load_library_scroll")
+    .show(ui, |ui| {
                 for load in loads {
                     ui.group(|ui| {
                         ui.horizontal(|ui| {
@@ -1021,7 +1028,7 @@ fn show_history_screen(&mut self, ui: &mut egui::Ui) {
         }
     }
 
-fn show_sharing_screen(&mut self, ui: &mut egui::Ui) {
+    fn show_sharing_screen(&mut self, ui: &mut egui::Ui) {
     ui.heading("🔄 Share Calculations");
     ui.label("Share your ballistics calculations securely via Nostr protocol");
 
@@ -1039,8 +1046,9 @@ fn show_sharing_screen(&mut self, ui: &mut egui::Ui) {
     ui.heading("Select Calculation to Share:");
 
     egui::ScrollArea::vertical()
-        .max_height(300.0)
-        .show(ui, |ui| {
+    .id_source("sharing_scroll")
+    .max_height(300.0)
+    .show(ui, |ui| {
             // Collect calculations to avoid borrow issues
             let calculations: Vec<_> = self.calculation_history.iter().take(10).cloned().collect();
             let mut to_share = None;
@@ -1107,11 +1115,14 @@ fn show_sharing_screen(&mut self, ui: &mut egui::Ui) {
         }
     }
 }
+   
     fn show_settings_screen(&mut self, ui: &mut egui::Ui) {
         ui.heading("⚙️ Settings");
         ui.separator();
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
+        egui::ScrollArea::vertical()
+    .id_source("settings_scroll")
+    .show(ui, |ui| {
             // Display Settings
             ui.group(|ui| {
                 ui.heading("🎨 Display");
@@ -1210,6 +1221,196 @@ fn show_sharing_screen(&mut self, ui: &mut egui::Ui) {
         });
     }
 
+    fn show_about_screen(&mut self, ui: &mut egui::Ui) {
+    egui::ScrollArea::vertical()
+        .id_source("about_scroll")
+        .show(ui, |ui| {
+            // Title and version
+            ui.vertical_centered(|ui| {
+                ui.heading("🎯 Ballistics Analyzer");
+                ui.label("Version 1.0.0");
+                ui.add_space(10.0);
+                ui.label("Professional Ballistics Calculator with Hardware Integration");
+                ui.add_space(20.0);
+            });
+
+            // Main description
+            ui.group(|ui| {
+                ui.label("Advanced trajectory calculation software designed for precision shooters, hunters, and ballistics enthusiasts. Calculate accurate firing solutions with real-time environmental data and hardware integration.");
+            });
+
+            ui.add_space(15.0);
+
+            // Features section
+            ui.collapsing("✨ Key Features", |ui| {
+                ui.label("• Advanced point-mass ballistics engine");
+                ui.label("• Multiple drag models (G1, G7, custom BC)");
+                ui.label("• Environmental corrections for temperature, pressure, humidity, and altitude");
+                ui.label("• Wind drift calculations with multiple wind zones");
+                ui.label("• Bluetooth rangefinder integration (Sig KILO, Leica, Vortex)");
+                ui.label("• Weather meter support (Kestrel, WeatherFlow)");
+                ui.label("• Firearm and ammunition profile management");
+                ui.label("• Trajectory visualization with zoom controls");
+                ui.label("• MOA and MIL adjustments for scopes");
+                ui.label("• Photo attachments and notes for each calculation");
+                ui.label("• Calculation history with search and export");
+                ui.label("• Decentralized sharing via Nostr protocol");
+                ui.label("• Progressive Web App - works offline");
+                ui.label("• Cross-platform: Windows, macOS, Linux, Web");
+            });
+
+            ui.add_space(10.0);
+
+            // Technical specs
+            ui.collapsing("🔧 Technical Information", |ui| {
+                ui.label(format!("Platform: {}", std::env::consts::OS));
+                ui.label(format!("Architecture: {}", std::env::consts::ARCH));
+                ui.label("Built with Rust and egui");
+                ui.label("WebAssembly support for browser deployment");
+                ui.separator();
+                ui.label("Ballistics Models:");
+                ui.label("• Modified Point Mass trajectory calculation");
+                ui.label("• Miller stability formula for spin drift");
+                ui.label("• Coriolis effect compensation");
+                ui.label("• Atmospheric density corrections");
+                ui.separator();
+                ui.label("Data Storage:");
+                ui.label("• Local SQLite database (desktop)");
+                ui.label("• IndexedDB (web browser)");
+                ui.label("• Encrypted with user's Nostr keys");
+                ui.label("• No cloud storage or tracking");
+            });
+
+            ui.add_space(10.0);
+
+            // Privacy section
+            ui.collapsing("🔒 Privacy & Security", |ui| {
+                ui.label("Your privacy is our priority:");
+                ui.label("• All data stored locally on your device");
+                ui.label("• No telemetry or analytics");
+                ui.label("• No account registration required");
+                ui.label("• Nostr protocol for decentralized identity");
+                ui.label("• End-to-end encryption for shared data");
+                ui.label("• Open source and auditable code");
+                ui.label("• No third-party dependencies for core functionality");
+            });
+
+            ui.add_space(10.0);
+
+            // Credits
+            ui.collapsing("👥 Credits & Acknowledgments", |ui| {
+                ui.label("Development Team:");
+                ui.label("• Lead Developer: Ballistics Analyzer Contributors");
+                ui.label("• UI/UX Design: egui Framework Team");
+                ui.label("• Ballistics Engine: Based on JBM Ballistics research");
+                ui.separator();
+                ui.label("Special Thanks:");
+                ui.label("• Rust Community for the amazing ecosystem");
+                ui.label("• egui by Emil Ernerfeldt");
+                ui.label("• Nostr Protocol developers");
+                ui.label("• All open source contributors");
+                ui.separator();
+                ui.label("Libraries Used:");
+                ui.label("• egui - Immediate mode GUI");
+                ui.label("• nostr-sdk - Nostr protocol implementation");
+                ui.label("• tokio - Async runtime");
+                ui.label("• serde - Serialization framework");
+                ui.label("• wasm-bindgen - WebAssembly bindings");
+            });
+
+            ui.add_space(10.0);
+
+            // Support section
+            ui.collapsing("💬 Support & Community", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("GitHub:");
+                    if ui.link("github.com/DatilDev/Ballistics-Analyzer").clicked() {
+                        // Open GitHub page
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            let _ = webbrowser::open("https://github.com/DatilDev/Ballistics-Analyzer");
+                        }
+                    }
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Report Issues:");
+                    if ui.link("GitHub Issues").clicked() {
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            let _ = webbrowser::open("https://github.com/DatilDev/Ballistics-Analyzer/issues");
+                        }
+                    }
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Documentation:");
+                    if ui.link("User Guide").clicked() {
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            let _ = webbrowser::open("https://github.com/DatilDev/Ballistics-Analyzer/blob/main/docs/USER_GUIDE.md");
+                        }
+                    }
+                });
+                ui.separator();
+                ui.label("Nostr Contact:");
+                ui.horizontal(|ui| {
+                    ui.label("Tag: #ballisticsanalyzer");
+                    if ui.button("📋 Copy").clicked() {
+                        ui.output_mut(|o| o.copied_text = "#ballisticsanalyzer".to_string());
+                    }
+                });
+            });
+
+            ui.add_space(10.0);
+
+            // License
+            ui.collapsing("📄 License", |ui| {
+                ui.label("MIT License");
+                ui.label("Copyright (c) 2025 Ballistics Analyzer Contributors");
+                ui.separator();
+                ui.label("Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:");
+                ui.separator();
+                ui.label("The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.");
+                ui.separator();
+                ui.label("THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.");
+            });
+
+            ui.add_space(10.0);
+
+            // Disclaimer
+            ui.group(|ui| {
+                ui.colored_label(egui::Color32::from_rgb(255, 200, 100), "⚠️ Safety Disclaimer");
+                ui.label("This software is for educational and sporting purposes only. Always verify calculations with real-world testing. Follow all firearm safety rules and local regulations. The developers assume no liability for the use or misuse of this software.");
+                ui.separator();
+                ui.label("• Always treat firearms as if they are loaded");
+                ui.label("• Never point a firearm at anything you don't intend to destroy");
+                ui.label("• Be sure of your target and what's beyond it");
+                ui.label("• Keep your finger off the trigger until ready to shoot");
+                ui.label("• Know your local laws and regulations");
+            });
+
+            ui.add_space(20.0);
+
+            // Footer
+            ui.separator();
+            ui.vertical_centered(|ui| {
+                ui.label("Made with ❤️ by the Ballistics Community");
+                ui.label(format!("Build Date: {}", env!("CARGO_PKG_VERSION")));
+                
+                ui.add_space(10.0);
+                
+                ui.horizontal(|ui| {
+                    if ui.button("🏠 Back to Main").clicked() {
+                        self.current_screen = Screen::Main;
+                    }
+                    ui.separator();
+                    if ui.button("📊 New Calculation").clicked() {
+                        self.new_calculation();
+                        self.current_screen = Screen::Analysis;
+                    }
+                });
+            });
+        });
+}
 
     fn show_trajectory_results(&self, ui: &mut egui::Ui, results: &TrajectoryResult) {
         ui.heading("📈 Trajectory Results");
@@ -1243,8 +1444,9 @@ fn show_sharing_screen(&mut self, ui: &mut egui::Ui) {
         ui.label("Detailed Trajectory Data:");
 
         egui::ScrollArea::vertical()
-            .max_height(400.0)
-            .show(ui, |ui| {
+    .id_source("trajectory_table_scroll")
+    .max_height(400.0)
+    .show(ui, |ui| {
                 egui::Grid::new("trajectory_grid")
                     .striped(true)
                     .spacing([10.0, 4.0])
@@ -1491,7 +1693,7 @@ fn show_sharing_screen(&mut self, ui: &mut egui::Ui) {
         }
     }
 
-fn show_load_data_popup(&mut self, _ui: &mut egui::Ui, ctx: &egui::Context) {
+    fn show_load_data_popup(&mut self, _ui: &mut egui::Ui, ctx: &egui::Context) {
     egui::Window::new("📚 Load Data Library")
         .default_pos([300.0, 200.0])
         .show(ctx, |ui| {
@@ -1519,8 +1721,9 @@ fn show_load_data_popup(&mut self, _ui: &mut egui::Ui, ctx: &egui::Context) {
 
             if !loads.is_empty() {
                 egui::ScrollArea::vertical()
-                    .max_height(300.0)
-                    .show(ui, |ui| {
+    .id_source("load_popup_scroll")
+    .max_height(300.0)
+    .show(ui, |ui| {
                         for load in &loads {
                             let load_clone = load.clone();
                             ui.group(|ui| {

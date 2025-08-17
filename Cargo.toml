@@ -37,6 +37,7 @@ getrandom = { version = "0.2", features = ["js"] }
 # GUI framework for desktop - using latest stable version
 eframe = { version = "0.29", default-features = true }
 egui_plot = "0.29"
+webbrowser = "1.0"
 
 # Logging
 env_logger = "0.11"
