@@ -11,37 +11,41 @@ categories = ["science", "simulation"]
 
 [dependencies]
 # Core GUI framework
-eframe = "0.28"
 egui = "0.28"
-egui_plot = "0.28"
 egui_extras = "0.28"
-ballistics_rs = "0.1.4"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# Utilities
-chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "1.10", features = ["v4", "serde"] }
-rand = "0.8"
+# Utilities with proper WASM support
+chrono = { version = "0.4", features = ["serde", "wasmbind"] }
+uuid = { version = "1.10", features = ["v4", "serde", "js"] }  # js feature for WASM
+rand = { version = "0.8", features = ["getrandom"] }  # getrandom for WASM
 anyhow = "1.0"
 thiserror = "1.0"
 base64 = "0.22"
 
-# Async runtime (needed for some features)
+# Async runtime
 futures = "0.3"
 
+# Required for WASM random number generation
+getrandom = { version = "0.2", features = ["js"] }
+
 # Desktop-only dependencies
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+[target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
+# GUI framework for desktop
+eframe = "0.28"
+egui_plot = "0.28"
+
 # Logging
 env_logger = "0.11"
 tracing = "0.1"
 
 # File system and database
 rusqlite = { version = "0.32", features = ["bundled"] }
-rfd = "0.14"  # File dialogs
-dirs = "5.0"  # Platform-specific directories
+rfd = "0.14"
+dirs = "5.0"
 
 # Nostr protocol
 nostr-sdk = "0.35"
@@ -59,11 +63,23 @@ arboard = "3.4"
 # Serial port communication (for hardware)
 serialport = "4.5"
 
-# Bluetooth support (optional, for rangefinders)
-# btleplug = "0.11"  # Uncomment if you want BLE support
+# Android-specific dependencies
+[target.'cfg(target_os = "android")'.dependencies]
+# Use compatible version with proper feature
+android-activity = { version = "0.5.2", features = ["native-activity"] }
+android_logger = "0.14"
+jni = "0.21"
+ndk = "0.8"  # Compatible version
+ndk-sys = "0.5"  # Compatible version
+ndk-context = "0.1"
+winit = { version = "0.29", features = ["android-native-activity"] }  # Compatible version
+raw-window-handle = "0.6"
 
-# Web-only dependencies
+# Web/WASM-specific dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+eframe = { version = "0.28", default-features = false, features = ["web"] }
+egui_plot = "0.28"
+
 # WASM bindings
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
@@ -85,6 +101,7 @@ web-sys = { version = "0.3.77", features = [
     "Navigator",
     "ServiceWorker",
     "ServiceWorkerContainer",
+    "ServiceWorkerRegistration",
     "Storage",
     "Location",
     "History",
@@ -97,9 +114,6 @@ web-sys = { version = "0.3.77", features = [
 console_error_panic_hook = "0.1"
 tracing-wasm = "0.2"
 
-# JSON parsing in WASM
-getrandom = { version = "0.2", features = ["js"] }
-
 # Development dependencies
 [dev-dependencies]
 criterion = "0.5"
@@ -108,7 +122,7 @@ tempfile = "3.12"
 
 # Build dependencies
 [build-dependencies]
-# Add if you need build scripts
+# None needed currently
 
 # Profile configurations
 [profile.dev]
@@ -121,39 +135,49 @@ lto = true
 codegen-units = 1
 strip = true
 
-[profile.wasm]
-inherits = "release"
-opt-level = "z"  # Optimize for size
-lto = true
-panic = "abort"
-
-# Web-specific profile
+# WASM-specific release profile
 [profile.wasm-release]
 inherits = "release"
-opt-level = "z"
+opt-level = "z"  # Optimize for size
 lto = "fat"
 panic = "abort"
 
-# Package metadata for WASM
+# Android-specific release profile
+[profile.android-release]
+inherits = "release"
+opt-level = "z"
+lto = true
+strip = true
+panic = "abort"
+
+# Package metadata for wasm-pack
 [package.metadata.wasm-pack]
 "wasm-opt" = ["-Oz", "--enable-simd"]
 
-# Workspace configuration (if you plan to have multiple crates)
+# Android build metadata
+[package.metadata.android]
+build_targets = ["aarch64-linux-android", "armv7-linux-androideabi"]
+min_sdk_version = 21
+target_sdk_version = 34
+
+# Workspace configuration
 [workspace]
 members = ["."]
 resolver = "2"
 
-# Patch dependencies if needed
+# Patches to ensure dependency compatibility
 [patch.crates-io]
-# Example: nostr-sdk = { git = "https://github.com/rust-nostr/nostr", branch = "master" }
+# Force specific versions for Android compatibility
+android-activity = { version = "0.5.2", features = ["native-activity"] }
 
-# Features (optional - for conditional compilation)
+# Features for conditional compilation
 [features]
 default = ["desktop"]
 desktop = []
 web = []
+android = []
 hardware = []
-bluetooth = []  # Add "btleplug" to dependencies if enabling this
+bluetooth = []
 debug-ui = []
 
 # Library configuration
@@ -162,19 +186,8 @@ name = "ballistics_analyzer"
 path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
-# Binary configuration
+# Binary configuration - only for desktop
 [[bin]]
 name = "ballistics-analyzer"
 path = "src/main.rs"
 required-features = ["desktop"]
-
-# Example configurations (if you have examples)
-[[example]]
-name = "trajectory_calculation"
-path = "examples/trajectory.rs"
-
-# Benchmark configurations (if you have benchmarks)
-[[bench]]
-name = "ballistics_bench"
-harness = false
-path = "benches/ballistics.rs"
