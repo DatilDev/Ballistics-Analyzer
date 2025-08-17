@@ -1,0 +1,57 @@
+[package]
+name = "ballistics-wasm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ballistics-core = { path = "../ballistics-core", features = ["gui", "nostr"] }
+
+# WASM framework
+eframe = { workspace = true, default-features = false, features = ["default_fonts", "glow"] }
+egui = { workspace = true }
+egui_extras = { workspace = true }
+egui_plot = { workspace = true }
+
+# WASM bindings
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+console_error_panic_hook = { workspace = true }
+tracing-wasm = { workspace = true }
+
+# Web APIs
+web-sys = { workspace = true, features = [
+    "Window",
+    "Document",
+    "Element",
+    "HtmlElement",
+    "HtmlCanvasElement",
+    "HtmlInputElement",
+    "File",
+    "FileList",
+    "FileReader",
+    "Blob",
+    "BlobPropertyBag",
+    "Url",
+    "Navigator",
+    "Storage",
+    "Location",
+    "History",
+    "console",
+] }
+
+# WASM-compatible dependencies
+getrandom = { workspace = true, features = ["js"] }
+uuid = { workspace = true, features = ["js"] }
+chrono = { workspace = true, features = ["wasmbind"] }
+
+# Nostr for web
+nostr-sdk = { workspace = true, features = ["nip07", "indexeddb", "webpki"] }
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[package.metadata.wasm-pack]
+"wasm-opt" = ["-Oz", "--enable-simd"]

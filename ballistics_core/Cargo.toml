@@ -1,0 +1,49 @@
+[package]
+name = "ballistics-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+base64 = { workspace = true }
+hex = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+rand = { workspace = true }
+futures = { workspace = true }
+
+# Optional features for different platforms
+egui = { workspace = true, optional = true }
+egui_extras = { workspace = true, optional = true }
+egui_plot = { workspace = true, optional = true }
+
+# Nostr support (optional)
+nostr = { workspace = true, optional = true }
+nostr-sdk = { workspace = true, optional = true, features = ["nip04", "nip07"] }
+secp256k1 = { workspace = true, optional = true }
+
+# Platform-specific optional dependencies
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rusqlite = { workspace = true, optional = true }
+tokio = { workspace = true, features = ["rt", "macros"], optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { workspace = true, features = ["js"] }
+uuid = { workspace = true, features = ["js"] }
+chrono = { workspace = true, features = ["wasmbind"] }
+
+[features]
+default = ["gui", "storage"]
+gui = ["egui", "egui_extras", "egui_plot"]
+storage = ["rusqlite"]
+nostr = ["dep:nostr", "dep:nostr-sdk", "dep:secp256k1"]
+async = ["tokio"]
+
+[lib]
+name = "ballistics_core"
+path = "src/lib.rs"

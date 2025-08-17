@@ -1,0 +1,68 @@
+[package]
+name = "ballistics-desktop"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ballistics-core = { path = "../ballistics-core", features = ["gui", "storage", "nostr", "async"] }
+
+# Desktop framework
+eframe = { workspace = true, default-features = true }
+egui = { workspace = true }
+egui_extras = { workspace = true }
+egui_plot = { workspace = true }
+
+# File operations
+rfd = { workspace = true }
+dirs = { workspace = true }
+webbrowser = { workspace = true }
+
+# System integration
+arboard = { workspace = true, default-features = false }
+env_logger = { workspace = true }
+tracing = { workspace = true }
+
+# Database
+rusqlite = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true, features = ["full"] }
+tokio-tungstenite = { workspace = true }
+
+# Nostr
+nostr-sdk = { workspace = true, features = ["sqlite", "nip04", "nip44", "nip46", "nip07"] }
+
+# Image processing
+image = { workspace = true }
+
+# Platform-specific dependencies
+[target.'cfg(target_os = "linux")'.dependencies]
+# Linux-specific
+libudev = { version = "0.3", optional = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# macOS-specific frameworks handled by build.rs
+cocoa = "0.25"
+objc = "0.2"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# Windows-specific
+winapi = { version = "0.3", features = ["winuser", "winbase", "winnls"] }
+
+# Hardware support (optional)
+[dependencies.serialport]
+workspace = true
+optional = true
+
+[features]
+default = ["hardware"]
+hardware = ["serialport", "libudev"]
+
+[[bin]]
+name = "ballistics-analyzer"
+path = "src/main.rs"
+
+[build-dependencies]
+cc = "1.0"

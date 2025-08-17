@@ -1,0 +1,55 @@
+[package]
+name = "ballistics-mobile"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ballistics-core = { path = "../ballistics-core", features = ["gui", "storage", "nostr"] }
+
+# GUI framework
+egui = { workspace = true }
+egui_extras = { workspace = true }
+
+# Mobile framework
+eframe = { workspace = true, default-features = false, features = ["glow"] }
+
+# Database
+rusqlite = { workspace = true }
+
+# Async runtime (lighter for mobile)
+tokio = { workspace = true, features = ["rt", "macros", "time"] }
+
+# Nostr
+nostr-sdk = { workspace = true, features = ["sqlite", "nip04"] }
+
+# Android-specific
+[target.'cfg(target_os = "android")'.dependencies]
+android-activity = { workspace = true }
+android_logger = { workspace = true }
+jni = "0.21"
+ndk = "0.9"
+ndk-glue = "0.7"
+
+# iOS-specific
+[target.'cfg(target_os = "ios")'.dependencies]
+objc = "0.2"
+objc-foundation = "0.1"
+core-foundation = "0.9"
+mobile-entry-point = "0.1"
+
+[lib]
+name = "ballistics_mobile"
+crate-type = ["cdylib", "staticlib"]
+path = "src/lib.rs"
+
+# Android configuration
+[package.metadata.android]
+build_targets = ["aarch64-linux-android", "armv7-linux-androideabi"]
+min_sdk_version = 21
+target_sdk_version = 34
+
+# iOS configuration
+[package.metadata.ios]
+deployment_target = "12.0"
