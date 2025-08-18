@@ -1,0 +1,111 @@
+# docker-compose.yml - Docker Compose configuration for Ballistics Analyzer
+
+version: '3.8'
+
+services:
+  ballistics-analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder  # Can use builder stage for development
+    image: ballistics-analyzer:latest
+    container_name: ballistics-app
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - XDG_RUNTIME_DIR=/tmp/runtime-ballistics
+      - NO_AT_BRIDGE=1
+      # Privacy settings
+      - ANALYTICS_ENABLED=false
+      - TELEMETRY_DISABLED=true
+      - LOCAL_STORAGE_ONLY=true
+    volumes:
+      # X11 socket for GUI (Linux)
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # User data (local storage only)
+      - ballistics-data:/home/ballistics/.local/share/ballistics
+      # For development - mount source code
+      # - ./ballistics_core:/build/ballistics_core:ro
+      # - ./ballistics-desktop:/build/ballistics-desktop:ro
+    network_mode: host  # Needed for X11 display
+    user: "1000:1000"  # Run as non-root user
+    restart: unless-stopped
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SYS_CHROOT  # Required for some GUI operations
+    read_only: false  # Need write for local data storage
+    tmpfs:
+      - /tmp
+      - /run
+    healthcheck:
+      test: ["CMD", "ballistics-analyzer", "--version"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Development container with build tools
+  ballistics-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: ballistics-dev:latest
+    container_name: ballistics-dev
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+    environment:
+      - CARGO_HOME=/home/developer/.cargo
+      - RUSTUP_HOME=/home/developer/.rustup
+    volumes:
+      - .:/workspace:rw
+      - cargo-cache:/home/developer/.cargo
+      - cargo-registry:/home/developer/.cargo/registry
+      - cargo-git:/home/developer/.cargo/git
+      - target-cache:/workspace/target
+    working_dir: /workspace
+    user: "1000:1000"
+
+  # Test runner container
+  ballistics-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: ballistics-test:latest
+    container_name: ballistics-test
+    command: cargo test --all
+    volumes:
+      - .:/workspace:ro
+      - test-results:/workspace/test-results
+    working_dir: /workspace
+    environment:
+      - RUST_BACKTRACE=1
+      - CARGO_TERM_COLOR=always
+
+volumes:
+  ballistics-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/.local/share/ballistics-analyzer
+  cargo-cache:
+    driver: local
+  cargo-registry:
+    driver: local
+  cargo-git:
+    driver: local
+  target-cache:
+    driver: local
+  test-results:
+    driver: local
+
+networks:
+  default:
+    name: ballistics-network
+    driver: bridge

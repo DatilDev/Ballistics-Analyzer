@@ -85,9 +85,11 @@ jobs:
            ballistics-mobile/android/app/src/main/jniLibs/x86_64/
     
     - name: Decode keystore (if secret exists)
-      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      env:
+        KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       run: |
-        echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > ballistics-mobile/android/release-keystore.jks
+        echo "$KEYSTORE_BASE64" | base64 --decode > ballistics-mobile/android/release-keystore.jks
     
     - name: Build APK
       working-directory: ballistics-mobile/android
@@ -111,13 +113,17 @@ jobs:
         ./gradlew bundleRelease
     
     - name: Sign APK (if keystore exists)
-      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       run: |
         $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
           --ks ballistics-mobile/android/release-keystore.jks \
-          --ks-pass "pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
-          --key-pass "pass:${{ secrets.ANDROID_KEY_PASSWORD }}" \
-          --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+          --ks-pass "pass:$KEYSTORE_PASSWORD" \
+          --key-pass "pass:$KEY_PASSWORD" \
+          --ks-key-alias "$KEY_ALIAS" \
           --out ballistics-analyzer-signed.apk \
           ballistics-mobile/android/app/build/outputs/apk/release/app-release-unsigned.apk
     
@@ -128,7 +134,7 @@ jobs:
         path: ballistics-mobile/android/app/build/outputs/apk/release/app-release-unsigned.apk
     
     - name: Upload signed APK
-      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      if: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       uses: actions/upload-artifact@v3
       with:
         name: ballistics-analyzer-signed

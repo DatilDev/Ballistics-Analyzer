@@ -58,7 +58,7 @@ impl MobileApp {
         
         // Initialize storage
         let storage: Box<dyn StorageBackend> = Box::new(
-            crate::storage::MobileStorage::new(storage_path).unwrap()
+            crate::storage::FileBasedStorage::new(storage_path).unwrap()
         );
         
         // Load saved data
