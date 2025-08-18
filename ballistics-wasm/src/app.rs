@@ -9,7 +9,7 @@ use crate::ui;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum View {
     Main,
     Calculation,
@@ -27,6 +27,7 @@ pub struct BallisticsWasmApp {
     pub calculation_data: CalculationData,
     pub saved_calculations: Vec<SavedCalculation>,
     pub profile_manager: FirearmProfileManager,
+    #[serde(skip, default = "LoadDataLibrary::new")]
     pub load_library: LoadDataLibrary,
     
     // UI state
@@ -56,14 +57,14 @@ pub struct BallisticsWasmApp {
     pub notification: Option<Notification>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Theme {
     Light,
     Dark,
     System,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Units {
     Imperial,
     Metric,
@@ -77,13 +78,13 @@ pub enum SyncAction {
     DeleteProfile(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Notification {
     pub message: String,
     pub kind: NotificationKind,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum NotificationKind {
     Success,
     Error,
@@ -228,21 +229,15 @@ impl BallisticsWasmApp {
     
     
     pub fn copy_to_clipboard(&self, text: &str) {
-        if let Some(window) = web_sys::window() {
-            if let Some(document) = window.document() {
-                // Create a temporary textarea element
-                if let Ok(textarea) = document.create_element("textarea") {
-                    if let Ok(textarea) = textarea.dyn_into::<web_sys::HtmlTextAreaElement>() {
-                        textarea.set_value(text);
-                        let _ = document.body().unwrap().append_child(&textarea);
-                        textarea.select();
-                        let _ = document.exec_command("copy");
-                        let _ = document.body().unwrap().remove_child(&textarea);
-                        }
-                    }
-                }
-            }
+    if let Some(window) = web_sys::window() {
+        if let Some(navigator) = window.navigator().clipboard() {
+            let promise = navigator.write_text(text);
+            let _ = wasm_bindgen_futures::spawn_local(async move {
+                let _ = wasm_bindgen_futures::JsFuture::from(promise).await;
+            });
+        }
     }
+}
     
     fn load_from_storage(&mut self) {
         self.saved_calculations = WebStorage::load_all_calculations();
@@ -262,7 +257,7 @@ impl BallisticsWasmApp {
     fn register_service_worker(&self) {
         spawn_local(async {
             if let Some(window) = web_sys::window() {
-                if let Some(navigator) = window.navigator().service_worker() {
+                if let Ok(navigator) = window.navigator().service_worker() {
                     match navigator.register("./sw.js").await {
                         Ok(_) => web_sys::console::log_1(&"Service Worker registered".into()),
                         Err(e) => web_sys::console::error_1(&format!("SW registration failed: {:?}", e).into()),
@@ -320,11 +315,26 @@ impl BallisticsWasmApp {
             self.show_notification("Pending changes synced", NotificationKind::Success);
         }
     }
+
+    fn save_to_storage(&self) {
+        // Save current state to localStorage
+        if let Ok(json) = serde_json::to_string(&self) {
+            if let Some(storage) = web_sys::window()
+                .and_then(|w| w.local_storage().ok())
+                .flatten() {
+                let _ = storage.set_item("ballistics_app_state", &json);
+            }
+        }
+    }
 }
+
+
 
 impl App for BallisticsWasmApp {
     fn save(&mut self, storage: &mut dyn Storage) {
-        eframe::set_value(storage, eframe::APP_KEY, self);
+        // WASM handles storage differenlty
+        // Data saved via WebStorage in custom implementation
+        self.save_to_storage();
     }
     
     fn update(&mut self, ctx: &Context, _frame: &mut Frame){
@@ -360,6 +370,8 @@ impl App for BallisticsWasmApp {
         // Save to local Storage periodically
         self.save_to_storage();
     }
+
+
 }
 
 fn configure_fonts(ctx: &Context) {
@@ -376,7 +388,7 @@ fn configure_fonts(ctx: &Context) {
         vec!["Roboto".to_owned(), "Segoe UI".to_owned()],
     );
     
-    font.families.insert(
+    fonts.families.insert(
         egui::FontFamily::Proportional,
         vec!["sans-serif".to_owned()],
     );

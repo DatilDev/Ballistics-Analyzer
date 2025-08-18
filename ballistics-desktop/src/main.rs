@@ -9,7 +9,6 @@ use ballistics_core::{
 };
 use eframe::egui;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 
 #[derive(Default)]
 pub struct BallisticsDesktopApp {
@@ -48,6 +47,12 @@ enum ViewType {
     Profiles,
     LoadData,
     Settings,
+}
+
+impl Default for ViewType {
+    fn default() -> Self {
+        ViewType::Main
+    }
 }
 
 impl BallisticsDesktopApp {
@@ -266,9 +271,9 @@ fn configure_fonts(ctx: &egui::Context) {
     
     fonts.font_data.insert(
         "custom".to_owned(),
-        Arc::new(egui::FontData::from_static(include_bytes!(
+        egui::FontData::from_static(include_bytes!(
             "../assets/Roboto-Regular.ttf"
-        ))),
+        ))
     );
     
     fonts.families.insert(

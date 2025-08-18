@@ -35,6 +35,7 @@ web-sys = { workspace = true, features = [
     "HtmlElement",
     "HtmlCanvasElement",
     "HtmlInputElement",
+    "HtmlDocument",
     "HtmlTextAreaElement",  # Add for clipboard workaround
     "File",
     "FileList",
@@ -50,6 +51,7 @@ web-sys = { workspace = true, features = [
     "Clipboard",
     "ClipboardEvent",
     "console",
+    "ServiceWorkerContainer",
 ] }
 
 # WASM-compatible dependencies

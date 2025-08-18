@@ -4,7 +4,7 @@ members = [
     "ballistics_core",
     "ballistics-desktop",
     "ballistics-mobile", 
-    "ballistics-wasm",
+    # "ballistics-wasm",
 ]
 
 [workspace.package]

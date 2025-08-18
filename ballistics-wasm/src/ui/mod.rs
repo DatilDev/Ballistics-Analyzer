@@ -84,22 +84,22 @@ pub fn render_app(app: &mut BallisticsWasmApp, ctx: &Context) {
     render_dialogs(app, ctx);
     
     // Notifications
-    if let Some(notification) = &app.notification {
-        TopBottomPanel::bottom("notification").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                let color = match notification.kind {
-                    crate::app::NotificationKind::Success => egui::Color32::GREEN,
-                    crate::app::NotificationKind::Error => egui::Color32::RED,
-                    crate::app::NotificationKind::Info => egui::Color32::BLUE,
-                };
-                ui.colored_label(color, &notification.message);
-                
-                if ui.button("✕").clicked() {
-                    app.notification = None;
-                }
-            });
+if let Some(notification) = app.notification.clone() {
+    TopBottomPanel::bottom("notification").show(ctx, |ui| {
+        ui.horizontal(|ui| {
+            let color = match notification.kind {
+                crate::app::NotificationKind::Success => egui::Color32::GREEN,
+                crate::app::NotificationKind::Error => egui::Color32::RED,
+                crate::app::NotificationKind::Info => egui::Color32::BLUE,
+            };
+            ui.colored_label(color, &notification.message);
+            
+            if ui.button("✕").clicked() {
+                app.notification = None;
+            }
         });
-    }
+    });
+}
 }
 
 fn render_navigation(app: &mut BallisticsWasmApp, ui: &mut egui::Ui) {

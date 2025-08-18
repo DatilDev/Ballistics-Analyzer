@@ -19,6 +19,9 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub fn main() {
     console_error_panic_hook::set_once();
     tracing_wasm::set_as_global_default();
+
+    #[cfg(target_arch = "wasm32")]
+    {
     
     let canvas_id = "ballistics_canvas";
     
@@ -28,7 +31,7 @@ pub fn main() {
             .start(
                 canvas_id,
                 eframe::WebOptions::default(),
-                Box::new(|cc| Box::new(app::BallisticsWasmApp::new(cc))),
+                Box::new(|cc| Ok(Box::new(app::BallisticsWasmApp::new(cc)))),
             )
             .await;
             
@@ -36,6 +39,12 @@ pub fn main() {
             web_sys::console::error_1(&format!("Failed to start: {:?}", e).into());
         }
     });
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+    {
+        panic!("This library is only intended for wasm32 targets");
+    }
 }
 
 // Export version information

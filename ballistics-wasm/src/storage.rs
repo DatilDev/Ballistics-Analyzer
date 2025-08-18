@@ -25,9 +25,9 @@ impl WebStorage {
             }
             
             // Save to localStorage
-            match serde_json::to_string(&data) {
-    Ok(json) => {
-        let _ = storage.set_item(key, &json);
+            match serde_json::to_string(&calculations) {
+                Ok(json) => {
+                    let _ = storage.set_item(STORAGE_KEY_CALCULATIONS, &json);
     }
     Err(e) => {
         web_sys::console::error_1(&format!("Serialization error: {}", e).into());
@@ -52,9 +52,9 @@ impl WebStorage {
             let mut calculations = Self::load_all_calculations();
             calculations.retain(|c| c.id != id);
             
-            match serde_json::to_string(&data) {
+            match serde_json::to_string(&calculations) {
     Ok(json) => {
-        let _ = storage.set_item(key, &json);
+        let _ = storage.set_item(STORAGE_KEY_CALCULATIONS, &json);
     }
     Err(e) => {
         web_sys::console::error_1(&format!("Serialization error: {}", e).into());
@@ -73,9 +73,9 @@ impl WebStorage {
                 profiles.push(profile.clone());
             }
             
-            match serde_json::to_string(&data) {
+            match serde_json::to_string(&profiles) {
     Ok(json) => {
-        let _ = storage.set_item(key, &json);
+        let _ = storage.set_item(STORAGE_KEY_PROFILES, &json);
     }
     Err(e) => {
         web_sys::console::error_1(&format!("Serialization error: {}", e).into());
@@ -100,9 +100,9 @@ impl WebStorage {
             let mut profiles = Self::load_profiles().unwrap_or_default();
             profiles.retain(|p| p.id != id);
             
-           match serde_json::to_string(&data) {
+           match serde_json::to_string(&profiles) {
     Ok(json) => {
-        let _ = storage.set_item(key, &json);
+        let _ = storage.set_item(STORAGE_KEY_PROFILES, &json);
     }
     Err(e) => {
         web_sys::console::error_1(&format!("Serialization error: {}", e).into());

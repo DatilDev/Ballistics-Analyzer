@@ -37,6 +37,13 @@ nostr-sdk = { workspace = true, features = ["sqlite", "nip04", "nip07"] }
 # Image processing
 image = { workspace = true }
 
+# Core dependencies
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+
 # Platform-specific dependencies
 [target.'cfg(target_os = "linux")'.dependencies]
 # Linux-specific
@@ -59,6 +66,7 @@ optional = true
 [features]
 default = ["hardware"]
 hardware = ["serialport", "libudev"]
+nostr = ["ballistics_core/nostr"]
 
 [[bin]]
 name = "ballistics-analyzer"
