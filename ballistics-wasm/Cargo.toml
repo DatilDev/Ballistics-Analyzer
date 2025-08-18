@@ -14,20 +14,28 @@ egui = { workspace = true }
 egui_extras = { workspace = true }
 egui_plot = { workspace = true }
 
+# Core dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+
 # WASM bindings
 wasm-bindgen = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
+wasm-bindgen-futures = { workspace = true }  # Only defined once
 console_error_panic_hook = { workspace = true }
 tracing-wasm = { workspace = true }
+
+# JavaScript APIs
+js-sys = "0.3"
 
 # Web APIs
 web-sys = { workspace = true, features = [
     "Window",
     "Document",
-    "Element",
+    "Element", 
     "HtmlElement",
     "HtmlCanvasElement",
     "HtmlInputElement",
+    "HtmlTextAreaElement",  # Add for clipboard workaround
     "File",
     "FileList",
     "FileReader",
@@ -38,6 +46,9 @@ web-sys = { workspace = true, features = [
     "Storage",
     "Location",
     "History",
+    "MediaQueryList",
+    "Clipboard",
+    "ClipboardEvent",
     "console",
 ] }
 

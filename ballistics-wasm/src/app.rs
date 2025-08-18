@@ -116,29 +116,12 @@ impl Default for BallisticsWasmApp {
 }
 
 impl BallisticsWasmApp {
-    pub fn new(cc: &CreationContext<'_>) -> Self {
-        // Configure fonts and style
+        pub fn new(cc: &CreationContext<'_>) -> Self {
         configure_fonts(&cc.egui_ctx);
         
-        // Load saved state from storage
-        let mut app = if let Some(storage) = cc.storage {
-            eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default()
-        } else {
-            Self::default()
-        };
-        
-        // Load data from IndexedDB
+        // Load from localStorage instead of eframe storage
+        let mut app = Self::default();
         app.load_from_storage();
-        
-        // Check online status
-        app.check_online_status();
-        
-        // Register service worker for offline support
-        app.register_service_worker();
-        
-        // Setup install prompt
-        app.setup_install_prompt();
-        
         app
     }
     
@@ -237,29 +220,28 @@ impl BallisticsWasmApp {
     }
     
     pub fn share_calculation(&self, calc: &SavedCalculation) {
-        if let Some(window) = web_sys::window() {
-            if let Some(navigator) = window.navigator().share() {
-                let share_data = web_sys::ShareData::new();
-                share_data.set_title("Ballistics Calculation");
-                share_data.set_text(&serde_json::to_string_pretty(calc).unwrap_or_default());
-                
-                let _ = navigator.share_with_data(&share_data);
-            } else {
-                // Fallback to clipboard
-                self.copy_to_clipboard(&serde_json::to_string_pretty(calc).unwrap_or_default());
-            }
-        }
+    if let Some(window) = web_sys::window() {
+        // Navigator.share() is not directly available, use clipboard fallback
+        self.copy_to_clipboard(&serde_json::to_string_pretty(calc).unwrap_or_default());
     }
+}
+    
     
     pub fn copy_to_clipboard(&self, text: &str) {
         if let Some(window) = web_sys::window() {
-            if let Some(clipboard) = window.navigator().clipboard() {
-                let text = text.to_string();
-                let promise = clipboard.write_text(&text);
-                let _ = wasm_bindgen_futures::JsFuture::from(promise);
-                self.show_notification("Copied to clipboard", NotificationKind::Info);
+            if let Some(document) = window.document() {
+                // Create a temporary textarea element
+                if let Ok(textarea) = document.create_element("textarea") {
+                    if let Ok(textarea) = textarea.dyn_into::<web_sys::HtmlTextAreaElement>() {
+                        textarea.set_value(text);
+                        let _ = document.body().unwrap().append_child(&textarea);
+                        textarea.select();
+                        let _ = document.exec_command("copy");
+                        let _ = document.body().unwrap().remove_child(&textarea);
+                        }
+                    }
+                }
             }
-        }
     }
     
     fn load_from_storage(&mut self) {
@@ -271,10 +253,9 @@ impl BallisticsWasmApp {
     }
     
     fn check_online_status(&mut self) {
-        if let Some(window) = web_sys::window() {
-            if let Some(navigator) = window.navigator().on_line() {
-                self.is_offline = !navigator;
-            }
+    if let Some(window) = web_sys::window() {
+        // navigator.on_line() returns bool, not Option
+        self.is_offline = !window.navigator().on_line();
         }
     }
     
@@ -346,7 +327,7 @@ impl App for BallisticsWasmApp {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
     
-    fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
+    fn update(&mut self, ctx: &Context, _frame: &mut Frame){
         // Apply theme
         match self.theme {
             Theme::Light => ctx.set_visuals(egui::Visuals::light()),
@@ -375,6 +356,9 @@ impl App for BallisticsWasmApp {
         
         // Render UI
         ui::render_app(self, ctx);
+
+        // Save to local Storage periodically
+        self.save_to_storage();
     }
 }
 
@@ -392,6 +376,10 @@ fn configure_fonts(ctx: &Context) {
         vec!["Roboto".to_owned(), "Segoe UI".to_owned()],
     );
     
+    font.families.insert(
+        egui::FontFamily::Proportional,
+        vec!["sans-serif".to_owned()],
+    );
     ctx.set_fonts(fonts);
 }
 

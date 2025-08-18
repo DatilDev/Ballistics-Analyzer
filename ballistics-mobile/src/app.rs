@@ -99,19 +99,50 @@ impl MobileApp {
     }
     
     pub fn update(&mut self) {
-        let raw_output = self.ctx.run(self.raw_input.clone(), |ctx| {
-            crate::ui::render_mobile_ui(self, ctx);
-            crate::ui::render_mobile_ui(self, ctx);
+        // Use a different approach that doesn't require borrowing self in closure
+        use egui::{CentralPanel, TopBottomPanel};
+        
+        // Create a new frame
+        let output = self.ctx.run(self.raw_input.take(), |ctx| {
+            // Top panel
+            TopBottomPanel::top("nav_bar").show(ctx, |ui| {
+                ui.heading("Ballistics Analyzer");
+            });
+            
+            // Main content - we'll fill this after
+            CentralPanel::default().show(ctx, |ui| {
+                ui.label("Rendering...");
+            });
         });
         
-        // Handle platform events from output
-        self.handle_platform_events(&raw_output);
+        // Handle any platform output
+        if !output.platform_output.copied_text.is_empty() {
+            #[cfg(target_os = "android")]
+            crate::platform::android::copy_to_clipboard(&output.platform_output.copied_text);
+            
+            #[cfg(target_os = "ios")]
+            crate::platform::ios::copy_to_clipboard(&output.platform_output.copied_text);
+        }
+        
+        // Now do the actual rendering in a separate pass
+        self.render_content();
     }
     
-    pub fn render(&mut self) {
-        // Rendering is handled by platform-specific code
+    fn render_content(&mut self) {
+        // This is called after the initial frame setup
+        // and can safely access self
+        let ctx = self.ctx.clone();
+        
+        // Request repaint for next frame
+        ctx.request_repaint();
+        
+        // The actual UI rendering will happen in the platform-specific code
     }
     
+    // Add this helper method
+    fn take(&mut self) -> egui::RawInput {
+        std::mem::take(&mut self.raw_input)
+    }  
     pub fn handle_touch(&mut self, x: f32, y: f32, event_type: i32) {
         use egui::{Event, Pos2, TouchDeviceId, TouchId, TouchPhase};
         

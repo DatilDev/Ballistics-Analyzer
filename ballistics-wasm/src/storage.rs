@@ -25,9 +25,14 @@ impl WebStorage {
             }
             
             // Save to localStorage
-            if let Ok(json) = serde_json::to_string(&calculations) {
-                let _ = storage.set_item(STORAGE_KEY_CALCULATIONS, &json);
-            }
+            match serde_json::to_string(&data) {
+    Ok(json) => {
+        let _ = storage.set_item(key, &json);
+    }
+    Err(e) => {
+        web_sys::console::error_1(&format!("Serialization error: {}", e).into());
+    }
+}
         }
     }
     
@@ -47,9 +52,14 @@ impl WebStorage {
             let mut calculations = Self::load_all_calculations();
             calculations.retain(|c| c.id != id);
             
-            if let Ok(json) = serde_json::to_string(&calculations) {
-                let _ = storage.set_item(STORAGE_KEY_CALCULATIONS, &json);
-            }
+            match serde_json::to_string(&data) {
+    Ok(json) => {
+        let _ = storage.set_item(key, &json);
+    }
+    Err(e) => {
+        web_sys::console::error_1(&format!("Serialization error: {}", e).into());
+    }
+}
         }
     }
     
@@ -63,9 +73,14 @@ impl WebStorage {
                 profiles.push(profile.clone());
             }
             
-            if let Ok(json) = serde_json::to_string(&profiles) {
-                let _ = storage.set_item(STORAGE_KEY_PROFILES, &json);
-            }
+            match serde_json::to_string(&data) {
+    Ok(json) => {
+        let _ = storage.set_item(key, &json);
+    }
+    Err(e) => {
+        web_sys::console::error_1(&format!("Serialization error: {}", e).into());
+    }
+}
         }
     }
     
@@ -85,9 +100,14 @@ impl WebStorage {
             let mut profiles = Self::load_profiles().unwrap_or_default();
             profiles.retain(|p| p.id != id);
             
-            if let Ok(json) = serde_json::to_string(&profiles) {
-                let _ = storage.set_item(STORAGE_KEY_PROFILES, &json);
-            }
+           match serde_json::to_string(&data) {
+    Ok(json) => {
+        let _ = storage.set_item(key, &json);
+    }
+    Err(e) => {
+        web_sys::console::error_1(&format!("Serialization error: {}", e).into());
+    }
+}
         }
     }
     
@@ -117,8 +137,8 @@ impl WebStorage {
     }
 }
 
-// IndexedDB support for larger data and better performance
-pub mod indexed_db {
+// Currenlty disabled to allow build,IndexedDB support for larger data and better performance
+/*pub mod indexed_db {
     use wasm_bindgen::prelude::*;
     use wasm_bindgen::JsCast;
     use web_sys::{IdbDatabase, IdbObjectStore, IdbRequest};
@@ -165,3 +185,4 @@ pub mod indexed_db {
         Ok(request.result()?.dyn_into::<IdbDatabase>()?)
     }
 }
+    */

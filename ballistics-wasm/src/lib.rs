@@ -13,32 +13,28 @@ use wasm_bindgen_futures::spawn_local;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 // Entry point for WASM
+
 #[wasm_bindgen(start)]
+
 pub fn main() {
-    // Initialize panic hook for better error messages
-    #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
-    
-    // Initialize logger
     tracing_wasm::set_as_global_default();
     
-    // Log startup
-    web_sys::console::log_1(&"Starting Ballistics Analyzer PWA...".into());
-    
-    // Get canvas element
     let canvas_id = "ballistics_canvas";
     
-    // Start the app
-    let web_options = eframe::WebOptions::default();
-    
-    spawn_local(async {
-        eframe::start_web(
-            canvas_id,
-            web_options,
-            Box::new(|cc| Box::new(app::BallisticsWasmApp::new(cc))),
-        )
-        .await
-        .expect("Failed to start eframe");
+    // Use wasm_bindgen_futures for async
+    wasm_bindgen_futures::spawn_local(async {
+        let start_result = eframe::WebRunner::new()
+            .start(
+                canvas_id,
+                eframe::WebOptions::default(),
+                Box::new(|cc| Box::new(app::BallisticsWasmApp::new(cc))),
+            )
+            .await;
+            
+        if let Err(e) = start_result {
+            web_sys::console::error_1(&format!("Failed to start: {:?}", e).into());
+        }
     });
 }
 

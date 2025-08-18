@@ -18,8 +18,8 @@ pub fn render_mobile_ui(app: &mut MobileApp, ctx: &Context) {
                 }
                 
                 if ui.button("📤").clicked() {
-                    if let Some(id) = &app.selected_calculation_id {
-                        app.share_calculation(id);
+                    if let Some(id) = app.selected_calculation_id.clone() {
+                        app.share_calculation(&id);
                     }
                 }
             });

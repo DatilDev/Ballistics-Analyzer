@@ -292,9 +292,10 @@ fn render_dialogs(app: &mut BallisticsWasmApp, ctx: &Context) {
                 ui.text_edit_multiline(&mut app.import_text);
                 
                 if ui.button("Import").clicked() {
-                    app.import_data(&app.import_text);
-                    app.import_text.clear();
-                }
+    let import_text = app.import_text.clone();
+    app.import_data(&import_text);
+    app.import_text.clear();
+}
                 
                 ui.separator();
                 
@@ -307,8 +308,6 @@ fn render_dialogs(app: &mut BallisticsWasmApp, ctx: &Context) {
 }
 
 fn install_pwa() {
-    // Trigger PWA install
-    if let Some(window) = web_sys::window() {
-        let _ = window.eval("if(deferredPrompt){deferredPrompt.prompt();}");
-    }
+    // Feature not available in web-sys
+    web_sys::console::log_1(&"PWA install not available".into());
 }

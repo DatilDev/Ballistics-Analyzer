@@ -1,7 +1,7 @@
-use std::ffi::{CStr, CString};
-use std::os::raw::c_char;
 #![cfg_attr(target_os = "android", feature(panic_info_message))]
 
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
 
 pub mod app;
 pub mod ui;
