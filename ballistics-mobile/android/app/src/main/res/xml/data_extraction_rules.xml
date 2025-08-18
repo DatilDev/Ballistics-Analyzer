@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ballistics-mobile/android/app/src/main/res/xml/data_extraction_rules.xml -->
+<data-extraction-rules>
+    <!-- Prevent all data from being backed up to cloud services -->
+    <cloud-backup>
+        <!-- Exclude all app data from cloud backup -->
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    
+    <device-transfer>
+        <!-- Allow device-to-device transfer for user convenience -->
+        <!-- Data stays local, just moves between user's own devices -->
+        <include domain="file" />
+        <include domain="database" />
+        <include domain="sharedpref" />
+        <!-- Exclude sensitive encrypted data -->
+        <exclude domain="root" path="ballistics_secure_prefs.xml" />
+    </device-transfer>
+</data-extraction-rules>

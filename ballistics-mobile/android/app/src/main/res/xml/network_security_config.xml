@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ballistics-mobile/android/app/src/main/res/xml/network_security_config.xml -->
+<network-security-config>
+    <!-- Default configuration: No cleartext traffic allowed -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Only allow connections to Nostr relays if user opts in -->
+    <!-- All connections must be HTTPS/WSS -->
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- Nostr relay domains (only if user enables sharing) -->
+        <domain includeSubdomains="false">relay.damus.io</domain>
+        <domain includeSubdomains="false">relay.nostr.band</domain>
+        <domain includeSubdomains="false">nos.lol</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
