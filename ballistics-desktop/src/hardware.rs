@@ -56,6 +56,7 @@ pub struct HardwareManager {
     serial_ports: Arc<Mutex<Vec<Box<dyn SerialPort>>>>,
 }
 
+#[allow(dead_code)]
 impl HardwareManager {
     pub fn new() -> Self {
         Self {

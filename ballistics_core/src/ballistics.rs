@@ -4,6 +4,7 @@ pub struct BallisticsCalculator;
 
 impl BallisticsCalculator {
     const GRAVITY: f64 = 32.174; // ft/s²
+    #[allow(dead_code)]
     const AIR_DENSITY_SEA_LEVEL: f64 = 0.076474; // lb/ft³
     
     pub fn calculate_trajectory(data: &mut CalculationData) {

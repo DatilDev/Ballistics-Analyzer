@@ -80,5 +80,4 @@ lto = "fat"
 [profile.dev]
 opt-level = 1
 
-# Deny dangerous patterns
-unsafe_code = "deny"
+

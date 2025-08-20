@@ -368,13 +368,13 @@ impl StorageBackend for FileBasedStorage {
     }
     
     fn list_calculations(&self) -> Result<Vec<SavedCalculation>> {
-        let mut calculations = Vec::new();
+        let mut calculations: Vec<SavedCalculation> = Vec::new();
         
         for entry in fs::read_dir(self.calculations_path())? {
             let entry = entry?;
             if entry.path().extension() == Some("json".as_ref()) {
                 let json = fs::read_to_string(entry.path())?;
-                if let Ok(calc) = serde_json::from_str(&json) {
+                if let Ok(calc) = serde_json::from_str::<SavedCalculation>(&json) {
                     calculations.push(calc);
                 }
             }
@@ -407,13 +407,13 @@ impl StorageBackend for FileBasedStorage {
     }
     
     fn list_profiles(&self) -> Result<Vec<FirearmProfile>> {
-        let mut profiles = Vec::new();
+        let mut profiles: Vec<FirearmProfile> = Vec::new();
         
         for entry in fs::read_dir(self.profiles_path())? {
             let entry = entry?;
             if entry.path().extension() == Some("json".as_ref()) {
                 let json = fs::read_to_string(entry.path())?;
-                if let Ok(profile) = serde_json::from_str(&json) {
+                if let Ok(profile) = serde_json::from_str::<FirearmProfile>(&json) {
                     profiles.push(profile);
                 }
             }

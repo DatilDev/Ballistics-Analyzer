@@ -1,4 +1,4 @@
-use crate::app::{MobileApp, ViewType};
+use crate::app::MobileApp;
 use egui::{Ui,  CollapsingHeader, Color32};
 use egui_plot as plot;
 

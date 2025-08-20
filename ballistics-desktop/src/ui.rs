@@ -57,6 +57,22 @@ pub fn render_hardware_panel(app: &mut BallisticsDesktopApp, ui: &mut Ui) {
         ui.group(|ui| {
             ui.label(&device.name);
             ui.label(format!("Battery: {:?}", device.battery_level));
-        });
+
+            if device.connected {
+            if ui.button("Read").clicked() {
+                if let Ok(Some(reading)) = app.hardware_manager.read_device(&device.id) {
+                    // Handle reading
+                    ui.label(format!("Last reading: {:?}", reading));
+                }
+            }
+            if ui.button("Disconnect").clicked() {
+                app.hardware_manager.disconnect_device(&device.id).ok();
+            }
+        } else {
+            if ui.button("Connect").clicked() {
+                app.hardware_manager.connect_device(&device.id).ok();
+        };
     }
+});
+}
 }

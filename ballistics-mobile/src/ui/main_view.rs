@@ -1,5 +1,4 @@
 use crate::app::MobileApp;
-use ballistics_core::BallisticsCalculator;
 use egui::{Ui, ScrollArea, CollapsingHeader, Slider, Grid, Button, Color32, RichText};
 
 pub fn render(app: &mut MobileApp, ui: &mut Ui) {

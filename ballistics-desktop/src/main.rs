@@ -286,16 +286,28 @@ fn configure_fonts(ctx: &egui::Context) {
 
 fn load_icon() -> Arc<egui::IconData> {
     let icon_bytes = include_bytes!("../assets/icon.png");
-    let icon = image::load_from_memory(icon_bytes)
-        .expect("Failed to load icon")
-        .to_rgba8();
-    let (width, height) = icon.dimensions();
     
-    Arc::new(egui::IconData {
-        rgba: icon.into_raw(),
-        width,
-        height,
-    })
+    // Try to load the icon, fall back to empty icon if it fails
+    match image::load_from_memory(icon_bytes) {
+        Ok(img) => {
+            let icon = img.to_rgba8();
+            let (width, height) = icon.dimensions();
+            Arc::new(egui::IconData {
+                rgba: icon.into_raw(),
+                width,
+                height,
+            })
+        }
+        Err(e) => {
+            eprintln!("Warning: Failed to load icon: {}. Using default.", e);
+            // Return a small default icon (1x1 transparent pixel)
+            Arc::new(egui::IconData {
+                rgba: vec![0, 0, 0, 0],
+                width: 1,
+                height: 1,
+            })
+        }
+    }
 }
 
 fn export_data(app: &BallisticsDesktopApp) {
