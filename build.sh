@@ -7,7 +7,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}Building Ballistics Analyzer${NC}"
+echo -e "${GREEN}Building IronSights${NC}"
 
 # Function to check if command exists
 command_exists() {
@@ -20,7 +20,7 @@ build_desktop() {
     cargo build --release
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ Desktop build complete${NC}"
-        echo "Binary location: target/release/ballistics-analyzer"
+        echo "Binary location: target/release/ironsights"
     else
         echo -e "${RED}✗ Desktop build failed${NC}"
         exit 1
@@ -52,7 +52,7 @@ build_web() {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ballistics Analyzer</title>
+    <title>IronSights</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a1a1a">
     <style>
@@ -80,10 +80,10 @@ build_web() {
     </style>
 </head>
 <body>
-    <div id="loading">Loading Ballistics Analyzer...</div>
+    <div id="loading">Loading IronSights...</div>
     <canvas id="ballistics_canvas"></canvas>
     <script type="module">
-        import init from './pkg/ballistics_analyzer.js';
+        import init from './pkg/ironsights.js';
         
         async function run() {
             await init();
@@ -102,7 +102,7 @@ EOF
             echo -e "${YELLOW}Creating manifest.json...${NC}"
             cat > dist/manifest.json << 'EOF'
 {
-    "name": "Ballistics Analyzer",
+    "name": "IronSights",
     "short_name": "Ballistics",
     "description": "Professional ballistics calculator with hardware integration",
     "start_url": "/",
@@ -134,8 +134,8 @@ const CACHE_NAME = 'ballistics-v1';
 const urlsToCache = [
     '/',
     '/index.html',
-    '/pkg/ballistics_analyzer.js',
-    '/pkg/ballistics_analyzer_bg.wasm',
+    '/pkg/ironsights.js',
+    '/pkg/ironsights_bg.wasm',
     '/manifest.json'
 ];
 

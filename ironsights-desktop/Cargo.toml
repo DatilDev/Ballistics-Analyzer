@@ -1,0 +1,72 @@
+
+[package]
+name = "ironsights-desktop"
+version = "1.0.0"
+edition = "2021"
+authors = ["IronSights Contributors"]
+license = "MIT"
+
+[dependencies]
+ironsights_core = { path = "../ironsights_core", features = ["gui", "storage", "nostr", "async"] }
+
+# Desktop framework
+eframe = { workspace = true }
+egui = { workspace = true }
+egui_extras = { workspace = true }
+egui_plot = { workspace = true }
+
+# File operations
+rfd = { workspace = true }
+dirs = { workspace = true }
+webbrowser = { workspace = true }
+
+# System integration
+arboard = { workspace = true }
+env_logger = { workspace = true }
+tracing = { workspace = true }
+
+# Database
+rusqlite = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true }
+
+# Nostr
+nostr-sdk = { workspace = true }
+
+# Image processing
+image = { workspace = true }
+
+# Core dependencies
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+
+# Hardware support (optional)
+serialport = { workspace = true, optional = true }
+libudev = { version = "0.3", optional = true }
+
+# Platform-specific dependencies
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.3", features = ["winuser", "winbase", "winnls"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.25"
+objc = "0.2"
+
+[features]
+default = ["arch-linux"]
+arch-linux = ["hardware"]
+minimal = []
+hardware = ["dep:serialport", "dep:libudev"]
+nostr = []
+
+[[bin]]
+name = "ironsights"
+path = "src/main.rs"
+
+[build-dependencies]
+cc = "1.0"

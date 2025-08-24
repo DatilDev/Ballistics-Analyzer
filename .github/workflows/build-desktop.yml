@@ -94,15 +94,15 @@ jobs:
         cd ballistics_core
         cargo build --release --target ${{ matrix.target }}
     
-    - name: Build ballistics-desktop
+    - name: Build ironsights-desktop
       run: |
-        cd ballistics-desktop
+        cd ironsights-desktop
         cargo build --release --target ${{ matrix.target }}
     
     - name: Strip binary
       run: |
         if [[ "${{ matrix.arch }}" == "x64" ]]; then
-          strip target/${{ matrix.target }}/release/ballistics-analyzer
+          strip target/${{ matrix.target }}/release/ironsights
         fi
     
     - name: Create AppImage
@@ -113,17 +113,17 @@ jobs:
     - name: Package application
       run: |
         mkdir -p dist
-        cp target/${{ matrix.target }}/release/ballistics-analyzer dist/
-        cp -r ballistics-desktop/assets dist/
+        cp target/${{ matrix.target }}/release/ironsights dist/
+        cp -r ironsights-desktop/assets dist/
         cp README.md LICENSE PRIVACY_POLICY.md dist/
-        tar -czf ballistics-analyzer-linux-${{ matrix.arch }}.tar.gz -C dist .
+        tar -czf ironsights-linux-${{ matrix.arch }}.tar.gz -C dist .
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ballistics-analyzer-linux-${{ matrix.arch }}-${{ matrix.os }}
+        name: ironsights-linux-${{ matrix.arch }}-${{ matrix.os }}
         path: |
-          ballistics-analyzer-linux-${{ matrix.arch }}.tar.gz
+          ironsights-linux-${{ matrix.arch }}.tar.gz
           *.AppImage
     
   build-windows:
@@ -174,9 +174,9 @@ jobs:
         cd ballistics_core
         cargo build --release --target ${{ matrix.target }}
     
-    - name: Build ballistics-desktop
+    - name: Build ironsights-desktop
       run: |
-        cd ballistics-desktop
+        cd ironsights-desktop
         cargo build --release --target ${{ matrix.target }}
       env:
         RUSTFLAGS: "-C target-feature=+crt-static"
@@ -185,10 +185,10 @@ jobs:
       shell: pwsh
       run: |
         New-Item -ItemType Directory -Force -Path dist
-        Copy-Item "target\${{ matrix.target }}\release\ballistics-analyzer.exe" dist\
-        Copy-Item -Recurse "ballistics-desktop\assets" dist\
+        Copy-Item "target\${{ matrix.target }}\release\ironsights.exe" dist\
+        Copy-Item -Recurse "ironsights-desktop\assets" dist\
         Copy-Item "README.md", "LICENSE", "PRIVACY_POLICY.md" dist\
-        Compress-Archive -Path dist\* -DestinationPath "ballistics-analyzer-windows-${{ matrix.arch }}.zip"
+        Compress-Archive -Path dist\* -DestinationPath "ironsights-windows-${{ matrix.arch }}.zip"
     
     - name: Create installer
       if: matrix.arch == 'x64'
@@ -199,10 +199,10 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ballistics-analyzer-windows-${{ matrix.arch }}
+        name: ironsights-windows-${{ matrix.arch }}
         path: |
-          ballistics-analyzer-windows-${{ matrix.arch }}.zip
-          ballistics-analyzer-setup.exe
+          ironsights-windows-${{ matrix.arch }}.zip
+          ironsights-setup.exe
     
   build-macos:
     strategy:
@@ -247,15 +247,15 @@ jobs:
         cd ballistics_core
         cargo build --release --target ${{ matrix.target }}
     
-    - name: Build ballistics-desktop
+    - name: Build ironsights-desktop
       run: |
-        cd ballistics-desktop
+        cd ironsights-desktop
         cargo build --release --target ${{ matrix.target }}
     
     - name: Create app bundle
       run: |
         chmod +x scripts/create-macos-bundle.sh
-        ./scripts/create-macos-bundle.sh target/${{ matrix.target }}/release/ballistics-analyzer
+        ./scripts/create-macos-bundle.sh target/${{ matrix.target }}/release/ironsights
     
     - name: Sign app (if certificate available)
       if: env.MACOS_CERTIFICATE
@@ -270,29 +270,29 @@ jobs:
         security unlock-keychain -p temp build.keychain
         security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k temp build.keychain
-        codesign --deep --force --verify --verbose --sign "$MACOS_IDENTITY" "build/macos/Ballistics Analyzer.app"
+        codesign --deep --force --verify --verbose --sign "$MACOS_IDENTITY" "build/macos/IronSights.app"
     
     - name: Create DMG
       run: |
         brew install create-dmg || true
         create-dmg \
-          --volname "Ballistics Analyzer" \
+          --volname "IronSights" \
           --window-pos 200 120 \
           --window-size 600 400 \
           --icon-size 100 \
-          --icon "Ballistics Analyzer.app" 175 120 \
-          --hide-extension "Ballistics Analyzer.app" \
+          --icon "IronSights.app" 175 120 \
+          --hide-extension "IronSights.app" \
           --app-drop-link 425 120 \
-          "ballistics-analyzer-macos-${{ matrix.arch }}.dmg" \
-          "build/macos/Ballistics Analyzer.app" || \
-        hdiutil create -volname "Ballistics Analyzer" -srcfolder "build/macos/Ballistics Analyzer.app" -ov -format UDZO "ballistics-analyzer-macos-${{ matrix.arch }}.dmg"
+          "ironsights-macos-${{ matrix.arch }}.dmg" \
+          "build/macos/IronSights.app" || \
+        hdiutil create -volname "IronSights" -srcfolder "build/macos/IronSights.app" -ov -format UDZO "ironsights-macos-${{ matrix.arch }}.dmg"
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ballistics-analyzer-macos-${{ matrix.arch }}
+        name: ironsights-macos-${{ matrix.arch }}
         path: |
-          ballistics-analyzer-macos-${{ matrix.arch }}.dmg
+          ironsights-macos-${{ matrix.arch }}.dmg
     
   build-arch-linux:
     runs-on: ubuntu-latest
@@ -324,7 +324,7 @@ jobs:
     - name: Build
       run: |
         cd ballistics_core && cargo build --release
-        cd ../ballistics-desktop && cargo build --release
+        cd ../ironsights-desktop && cargo build --release
     
     - name: Create PKGBUILD
       run: |
@@ -339,7 +339,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ballistics-analyzer-arch-linux
+        name: ironsights-arch-linux
         path: pkg/*.pkg.tar.zst
     
   create-release:

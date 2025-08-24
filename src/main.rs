@@ -112,7 +112,7 @@ fn main() -> eframe::Result<()> {
     };
 
     eframe::run_native(
-        "Ballistics Analyzer",
+        "IronSights",
         native_options,
         Box::new(|cc| {
             setup_custom_fonts(&cc.egui_ctx);
@@ -195,7 +195,7 @@ impl eframe::App for BallisticsApp {
         // Top menu bar
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.heading("🎯 Ballistics Analyzer");
+                ui.heading("🎯 IronSights");
                 ui.separator();
 
                 if self.auth.is_authenticated() {
@@ -310,7 +310,7 @@ impl BallisticsApp {
         ui.vertical_centered(|ui| {
             ui.add_space(100.0);
 
-            ui.heading("🎯 Advanced Ballistics Analyzer");
+            ui.heading("🎯 Advanced IronSights");
             ui.add_space(20.0);
             ui.label("Professional Trajectory Calculations with Hardware Integration");
             ui.add_space(40.0);
@@ -382,7 +382,7 @@ impl BallisticsApp {
 
     fn show_main_screen(&mut self, ui: &mut egui::Ui) {
         ui.vertical_centered(|ui| {
-            ui.heading("Welcome to Ballistics Analyzer");
+            ui.heading("Welcome to IronSights");
             ui.add_space(20.0);
 
             ui.columns(3, |columns| {
@@ -1214,7 +1214,7 @@ impl BallisticsApp {
             // About section link
             ui.group(|ui| {
                 ui.heading("ℹ️ Information");
-                if ui.button("📖 About Ballistics Analyzer").clicked() {
+                if ui.button("📖 About IronSights").clicked() {
                     self.current_screen = Screen::About;
                 }
             });
@@ -1227,7 +1227,7 @@ impl BallisticsApp {
         .show(ui, |ui| {
             // Title and version
             ui.vertical_centered(|ui| {
-                ui.heading("🎯 Ballistics Analyzer");
+                ui.heading("🎯 IronSights");
                 ui.label("Version 1.0.0");
                 ui.add_space(10.0);
                 ui.label("Professional Ballistics Calculator with Hardware Integration");
@@ -1300,7 +1300,7 @@ impl BallisticsApp {
             // Credits
             ui.collapsing("👥 Credits & Acknowledgments", |ui| {
                 ui.label("Development Team:");
-                ui.label("• Lead Developer: Ballistics Analyzer Contributors");
+                ui.label("• Lead Developer: IronSights Contributors");
                 ui.label("• UI/UX Design: egui Framework Team");
                 ui.label("• Ballistics Engine: Based on JBM Ballistics research");
                 ui.separator();
@@ -1365,7 +1365,7 @@ impl BallisticsApp {
             // License
             ui.collapsing("📄 License", |ui| {
                 ui.label("MIT License");
-                ui.label("Copyright (c) 2025 Ballistics Analyzer Contributors");
+                ui.label("Copyright (c) 2025 IronSights Contributors");
                 ui.separator();
                 ui.label("Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:");
                 ui.separator();

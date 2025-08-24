@@ -33,7 +33,7 @@ jobs:
         name: arch-linux-build
         path: |
           pkg/*.pkg.tar.zst
-          target/release/ballistics-analyzer
+          target/release/ironsights
 
   build-android:
     runs-on: ubuntu-latest
@@ -62,7 +62,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: android-apk
-        path: ballistics-mobile/android/app/build/outputs/apk/release/*.apk
+        path: ironsights-mobile/android/app/build/outputs/apk/release/*.apk
 
   # Secondary platforms - only on tags/releases
   build-others:
@@ -78,11 +78,11 @@ jobs:
     
     - name: Build fallback binary
       run: |
-        cd ballistics-desktop
+        cd ironsights-desktop
         cargo build --release --features all-platforms
         
     - name: Upload
       uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.os }}-fallback
-        path: target/release/ballistics-analyzer*
+        path: target/release/ironsights*

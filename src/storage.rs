@@ -14,7 +14,7 @@ impl LocalStorage {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let mut path = dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("."));
-            path.push("ballistics_analyzer");
+            path.push("ironsights");
             let _ = std::fs::create_dir_all(&path);
             let short = if user_pubkey.len() >= 8 {
                 &user_pubkey[..8]

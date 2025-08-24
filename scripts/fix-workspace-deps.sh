@@ -1,3 +1,34 @@
+#!/bin/bash
+# fix-workspace-deps.sh
+
+echo "Finding all workspace dependencies..."
+
+# Create a temporary file to collect all dependencies
+DEPS_FILE="/tmp/workspace_deps.txt"
+> "$DEPS_FILE"
+
+# Find all workspace = true dependencies
+for cargo_file in ironsights_core/Cargo.toml ironsights-desktop/Cargo.toml ironsights-mobile/Cargo.toml; do
+    if [ -f "$cargo_file" ]; then
+        echo "Checking $cargo_file..."
+        grep "workspace = true" "$cargo_file" | while read -r line; do
+            # Extract the dependency name
+            dep=$(echo "$line" | sed -n 's/^\([a-z_-]*\).*/\1/p')
+            if [ ! -z "$dep" ]; then
+                echo "$dep" >> "$DEPS_FILE"
+            fi
+        done
+    fi
+done
+
+# Get unique dependencies
+UNIQUE_DEPS=$(sort "$DEPS_FILE" | uniq)
+
+echo "Found dependencies that need workspace definitions:"
+echo "$UNIQUE_DEPS"
+
+# Now create a complete Cargo.toml with all dependencies
+cat > Cargo.toml << 'EOF'
 [workspace]
 members = [
     "ironsights_core",
@@ -14,19 +45,15 @@ license = "MIT"
 [workspace.dependencies]
 # Core dependencies
 anyhow = "1.0"
-thiserror = "1.0"
 base64 = "0.22"
-hex = "0.4"
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 uuid = { version = "1.5", features = ["v4", "serde"] }
-rand = "0.8"
-futures = "0.3"
 
 # GUI dependencies
 egui = "0.28"
-eframe = { version = "0.28", default-features = false, features = ["glow"] }
+eframe = { version = "0.28", default-features = false }
 egui_extras = { version = "0.28", features = ["image"] }
 egui_plot = "0.28"
 
@@ -35,13 +62,11 @@ rusqlite = { version = "0.31", features = ["bundled"] }
 r2d2 = "0.8"
 r2d2_sqlite = "0.24"
 
-# Async/Network
-tokio = { version = "1.35", features = ["rt", "rt-multi-thread", "macros", "time"] }
-tokio-tungstenite = "0.21"
+# Async
+tokio = { version = "1.35", features = ["rt-multi-thread", "macros", "time"] }
 
-# Nostr/Crypto
+# Nostr
 nostr-sdk = { version = "0.35", default-features = false, features = ["sqlite", "nip04"] }
-secp256k1 = { version = "0.28", features = ["rand"] }
 
 # Android
 android-activity = "0.5"
@@ -60,14 +85,12 @@ mobile-entry-point = "0.1"
 # Logging
 log = "0.4"
 env_logger = "0.11"
-tracing = "0.1"
 
 # File/System
 dirs = "5.0"
 image = { version = "0.24", default-features = false, features = ["png", "jpeg"] }
 rfd = "0.14"
 webbrowser = "0.8"
-arboard = "3.3"  # Clipboard
 
 # Utilities
 lazy_static = "1.4"
@@ -79,7 +102,13 @@ web-sys = "0.3"
 getrandom = { version = "0.2", features = ["js"] }
 
 # Hardware
-serialport = "4.3"
+serialport = { version = "4.3", optional = true }
 
 # Build dependencies
 winres = "0.1"
+EOF
+
+echo "✓ Created comprehensive Cargo.toml"
+
+# Try to build
+cargo build

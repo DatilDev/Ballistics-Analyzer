@@ -1,4 +1,4 @@
-# Ballistics Analyzer - Android & Arch Linux Edition
+# IronSights - Android & Arch Linux Edition
 
 This branch contains the Android and Arch Linux specific builds only.
 

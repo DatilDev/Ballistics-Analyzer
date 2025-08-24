@@ -8,8 +8,8 @@ on:
   pull_request:
     branches: [ main, develop ]
     paths:
-      - 'ballistics-mobile/**'
-      - 'ballistics-desktop/**'
+      - 'ironsights-mobile/**'
+      - 'ironsights-desktop/**'
       - '.github/workflows/build-android-arch.yml'
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
     - name: Build for Arch
       run: |
         cargo build --release -p ballistics_core
-        cargo build --release -p ballistics-desktop --features arch-linux
+        cargo build --release -p ironsights-desktop --features arch-linux
         makepkg -f --noconfirm
     - name: Upload Arch artifacts
       uses: actions/upload-artifact@v3
@@ -68,7 +68,7 @@ jobs:
           
     - name: Build Android APK
       run: |
-        cd ballistics-mobile
+        cd ironsights-mobile
         cargo ndk --target aarch64-linux-android --target armv7-linux-androideabi build --release
         cd android
         chmod +x gradlew  # Ensure it's executable
@@ -78,7 +78,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: android-apk
-        path: ballistics-mobile/android/app/build/outputs/apk/release/*.apk
+        path: ironsights-mobile/android/app/build/outputs/apk/release/*.apk
 
   create-release:
     needs: [build-arch, build-android]

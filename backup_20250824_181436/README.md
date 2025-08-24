@@ -1,19 +1,22 @@
-# 🎯 IronSights
+# 🎯 Ballistics Analyzer
+
+[![Build Status](https://github.com/DatilDev/Ballistics-Analyzer/workflows/Build%20and%20Release/badge.svg)](https://github.com/DatilDev/Ballistics-Analyzer/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![PWA Ready](https://img.shields.io/badge/PWA-Ready-brightgreen.svg)](https://datildev.github.io/Ballistics-Analyzer/)
+[![Rust](https://img.shields.io/badge/rust-%E2%9C%94-orange.svg)](https://www.rust-lang.org)
+[![GitHub release](https://img.shields.io/github/release/DatilDev/Ballistics-Analyzer.svg)](https://github.com/DatilDev/Ballistics-Analyzer/releases)
+
+Professional-grade ballistics calculation software with hardware integration, available as a Progressive Web App and native applications for all platforms.
 
 <div align="center">
-
-![IronSights Logo](assets/logo.png)
-
-**Professional Ballistics Calculator for Precision Shooting**
-
-[![Build Status](https://github.com/yourusername/ironsights/workflows/Build/badge.svg)](https://github.com/yourusername/ironsights/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Platform](https://img.shields.io/badge/Platform-Arch%20Linux%20%7C%20Android-blue)]()
-
+  <img src="assets/screenshot-main.png" alt="Ballistics Analyzer Main Screen" width="600">
 </div>
 
----
+## 🌐 Try It Now
 
+### **[Launch Ballistics Analyzer PWA →](https://datildev.github.io/Ballistics-Analyzer/)**
+
+Works instantly in any modern browser - install it as an app for offline access!
 
 ## ✨ Features
 
@@ -60,11 +63,11 @@
 #### Arch Linux
 ```bash
 # From AUR (when available)
-yay -S ironsights
+yay -S ballistics-analyzer
 
 # From source
-git clone https://github.com/DatilDev/IronSights.git
-cd IronSights
+git clone https://github.com/DatilDev/Ballistics-Analyzer.git
+cd Ballistics-Analyzer
 make build-arch
 sudo make install
 
@@ -124,8 +127,8 @@ make build-android
 
 ```bash
 # Clone repository
-git clone https://github.com/DatilDev/IronSights.git
-cd IronSights
+git clone https://github.com/DatilDev/Ballistics-Analyzer.git
+cd Ballistics-Analyzer
 
 # Install Rust (if needed)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -151,7 +154,7 @@ cd dist && python3 -m http.server 8000
 ```powershell
 # Build for Windows
 cargo build --release --target x86_64-pc-windows-msvc
-# Output: target/release/ironsights.exe
+# Output: target/release/ballistics-analyzer.exe
 ```
 
 #### macOS
@@ -163,9 +166,9 @@ cargo build --release --target x86_64-apple-darwin
 cargo build --release --target aarch64-apple-darwin
 
 # Create universal binary
-lipo -create target/x86_64-apple-darwin/release/ironsights \
-             target/aarch64-apple-darwin/release/ironsights \
-     -output ironsights-universal
+lipo -create target/x86_64-apple-darwin/release/ballistics-analyzer \
+             target/aarch64-apple-darwin/release/ballistics-analyzer \
+     -output ballistics-analyzer-universal
 ```
 
 #### Linux
@@ -266,7 +269,7 @@ cargo audit
 
 ### Project Structure
 ```
-IronSights/
+Ballistics-Analyzer/
 ├── src/
 │   ├── main.rs              # Desktop entry point
 │   ├── lib.rs               # Library root
@@ -324,7 +327,7 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 ```
 MIT License
 
-Copyright (c) 2025 IronSights Contributors
+Copyright (c) 2025 Ballistics Analyzer Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -341,8 +344,8 @@ in the Software without restriction...
 
 ## 📞 Support
 
-- **Bug Reports**: [GitHub Issues](https://github.com/DatilDev/IronSights/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/DatilDev/IronSights/discussions)
+- **Bug Reports**: [GitHub Issues](https://github.com/DatilDev/Ballistics-Analyzer/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/DatilDev/Ballistics-Analyzer/discussions)
 - **Security**: [Security Policy](SECURITY.md)
 - **Email**: support@datildev.com
 - **Nostr**: `#ballisticsanalyzer`
@@ -360,9 +363,9 @@ This project is maintained by volunteers. Support development:
 
 ## 📈 Stats
 
-![GitHub stars](https://img.shields.io/github/stars/DatilDev/IronSights?style=social)
-![GitHub forks](https://img.shields.io/github/forks/DatilDev/IronSights?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/DatilDev/IronSights?style=social)
+![GitHub stars](https://img.shields.io/github/stars/DatilDev/Ballistics-Analyzer?style=social)
+![GitHub forks](https://img.shields.io/github/forks/DatilDev/Ballistics-Analyzer?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/DatilDev/Ballistics-Analyzer?style=social)
 
 ---
 
@@ -374,6 +377,6 @@ This software is for educational and sporting purposes only. Always verify calcu
 
 **Made with ❤️ by the Ballistics Community**
 
-[Website](https://datildev.github.io/IronSights/) • [Documentation](docs/) • [Releases](https://github.com/DatilDev/IronSights/releases) • [Issues](https://github.com/DatilDev/IronSights/issues)
+[Website](https://datildev.github.io/Ballistics-Analyzer/) • [Documentation](docs/) • [Releases](https://github.com/DatilDev/Ballistics-Analyzer/releases) • [Issues](https://github.com/DatilDev/Ballistics-Analyzer/issues)
 
 </div>

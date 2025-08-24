@@ -68,9 +68,9 @@ impl LocalRelay {
                     // NIP-11 if someone pokes via plain HTTP-style text
                     let info = RelayInfo {
                         name: "Local Personal Relay".to_string(),
-                        description: "Local relay for Ballistics Analyzer".to_string(),
+                        description: "Local relay for IronSights".to_string(),
                         pubkey: None,
-                        software: "ballistics-analyzer-local-relay".to_string(),
+                        software: "ironsights-local-relay".to_string(),
                         version: "0.1.0".to_string(),
                     };
                     let _ = ws

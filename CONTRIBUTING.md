@@ -1,4 +1,4 @@
-# Contributing to Ballistics Analyzer
+# Contributing to IronSights
 
 Thank you for your interest in contributing! We welcome all contributions that improve the project.
 
@@ -9,7 +9,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/ballistics-analyzer.git`
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/ironsights.git`
 3. Create a branch: `git checkout -b feature/your-feature`
 4. Make your changes
 5. Test thoroughly

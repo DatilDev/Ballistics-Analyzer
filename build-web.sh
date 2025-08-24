@@ -2,7 +2,7 @@
 
 set -e
 
-echo "Building Ballistics Analyzer PWA..."
+echo "Building IronSights PWA..."
 
 # Colors
 GREEN='\033[0;32m'

@@ -1,4 +1,5 @@
-# Simplified Makefile for Android & Arch Linux
+# Makefile - Fixed for IronSights
+
 PLATFORMS ?= android arch
 BUILD_TYPE ?= release
 CARGO_FLAGS := $(if $(filter release,$(BUILD_TYPE)),--release,)
@@ -13,18 +14,31 @@ NC := \033[0m
 IS_ARCH := $(shell test -f /etc/arch-release && echo yes)
 HAS_ANDROID := $(shell test -n "$$ANDROID_HOME" && echo yes)
 
-.PHONY: help build clean test
+.PHONY: help build clean test setup setup-android build-arch build-android
 
 help:
-	@echo "$(GREEN)Ballistics Analyzer - Android & Arch Linux$(NC)"
+	@echo "$(GREEN)IronSights - Android & Arch Linux$(NC)"
 	@echo "Arch Linux: $(IS_ARCH), Android SDK: $(HAS_ANDROID)"
 	@echo ""
 	@echo "Commands:"
+	@echo "  make setup        - Setup build environment"
+	@echo "  make setup-android - Setup Android build tools"
 	@echo "  make build        - Build for available platforms"
 	@echo "  make build-arch   - Build for Arch Linux"
 	@echo "  make build-android - Build Android APK"
 	@echo "  make clean        - Clean all artifacts"
 	@echo "  make test         - Run tests"
+
+setup-android:
+	@echo "$(YELLOW)Setting up Android build environment...$(NC)"
+	@if [ -f scripts/setup-android-build.sh ]; then \
+		./scripts/setup-android-build.sh; \
+	else \
+		echo "$(RED)setup-android-build.sh not found$(NC)"; \
+	fi
+
+setup: setup-android
+	@echo "$(GREEN)✓ Setup complete$(NC)"
 
 build:
 	@if [ "$(IS_ARCH)" = "yes" ]; then \
@@ -35,12 +49,12 @@ build:
 	fi
 	@if [ "$(IS_ARCH)" != "yes" ] && [ "$(HAS_ANDROID)" != "yes" ]; then \
 		echo "$(YELLOW)Building generic Linux binary...$(NC)"; \
-		cargo build $(CARGO_FLAGS) -p ballistics-desktop --no-default-features --features minimal; \
+		cargo build $(CARGO_FLAGS) -p ironsights-desktop --no-default-features --features minimal; \
 	fi
 
 build-arch:
 	@echo "$(YELLOW)Building Arch Linux package...$(NC)"
-	cargo build $(CARGO_FLAGS) -p ballistics-desktop --features arch-linux
+	cargo build $(CARGO_FLAGS) -p ironsights-desktop --features arch-linux
 	@if [ "$(IS_ARCH)" = "yes" ]; then \
 		makepkg -f --noconfirm; \
 		echo "$(GREEN)✓ Package created: *.pkg.tar.zst$(NC)"; \
@@ -49,19 +63,48 @@ build-arch:
 build-android:
 	@if [ -z "$$ANDROID_HOME" ]; then \
 		echo "$(RED)Error: ANDROID_HOME not set$(NC)"; \
+		echo "Run: export ANDROID_HOME=$$HOME/Android/Sdk"; \
+		exit 1; \
+	fi
+	@if [ -z "$$ANDROID_NDK_HOME" ]; then \
+		echo "$(RED)Error: ANDROID_NDK_HOME not set$(NC)"; \
+		echo "Run: export ANDROID_NDK_HOME=$$ANDROID_HOME/ndk/26.1.10909125"; \
 		exit 1; \
 	fi
 	@echo "$(YELLOW)Building Android APK...$(NC)"
-	@cd ballistics-mobile && \
+	@if [ ! -d "ironsights-mobile" ]; then \
+		echo "$(RED)Error: ironsights-mobile directory not found$(NC)"; \
+		exit 1; \
+	fi
+	@cd ironsights-mobile && \
 		cargo ndk --target aarch64-linux-android --target armv7-linux-androideabi build $(CARGO_FLAGS) && \
 		cd android && \
 		chmod +x gradlew && \
 		./gradlew assembleRelease
-	@echo "$(GREEN)✓ APK created in ballistics-mobile/android/app/build/outputs/$(NC)"
-	
+	@echo "$(GREEN)✓ APK created in ironsights-mobile/android/app/build/outputs/$(NC)"
+
 clean:
 	cargo clean
 	rm -rf build/ pkg/
 
 test:
 	cargo test --workspace
+
+# Additional helpful targets
+check-android:
+	@echo "Checking Android environment..."
+	@echo "ANDROID_HOME: $$ANDROID_HOME"
+	@echo "ANDROID_NDK_HOME: $$ANDROID_NDK_HOME"
+	@if [ -d "$$ANDROID_NDK_HOME" ]; then \
+		echo "$(GREEN)✓ NDK found$(NC)"; \
+	else \
+		echo "$(RED)✗ NDK not found$(NC)"; \
+	fi
+	@which cargo-ndk > /dev/null && echo "$(GREEN)✓ cargo-ndk installed$(NC)" || echo "$(RED)✗ cargo-ndk not installed$(NC)"
+
+run-desktop:
+	cargo run -p ironsights-desktop
+
+install-tools:
+	cargo install cargo-ndk
+	cargo install cargo-watch

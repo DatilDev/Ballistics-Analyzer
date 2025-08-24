@@ -1,5 +1,5 @@
 {
-  "name": "ironsights",
+  "name": "ballistics-analyzer",
   "version": "1.0.0",
   "description": "Professional ballistics calculator PWA",
   "scripts": {
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ironsights/ironsights.git"
+    "url": "git+https://github.com/ballistics-analyzer/ballistics-analyzer.git"
   },
   "keywords": [
     "ballistics",
@@ -25,6 +25,6 @@
     "rust",
     "wasm"
   ],
-  "author": "IronSights Team",
+  "author": "Ballistics Analyzer Team",
   "license": "MIT"
 }

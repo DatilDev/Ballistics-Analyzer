@@ -1,0 +1,69 @@
+
+[package]
+name = "ironsights-mobile"
+version = "1.0.0"
+edition = "2021"
+authors = ["IronSights Contributors"]
+license = "MIT"
+
+[dependencies]
+ironsights_core = { path = "../ironsights_core", features = ["gui", "storage"] }
+
+# GUI framework
+egui = { workspace = true }
+egui_extras = { workspace = true }
+egui_plot = { workspace = true }
+
+# Mobile framework
+eframe = { workspace = true }
+
+# Core dependencies
+uuid = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+
+# Database
+rusqlite = { workspace = true }
+
+# Async runtime (lighter for mobile)
+tokio = { workspace = true }
+
+# Nostr
+nostr-sdk = { workspace = true }
+
+# Android-specific
+[target.'cfg(target_os = "android")'.dependencies]
+android-activity = { workspace = true }
+android_logger = { workspace = true }
+jni = { workspace = true }
+ndk = { workspace = true }
+ndk-glue = { workspace = true }
+
+# iOS-specific
+[target.'cfg(target_os = "ios")'.dependencies]
+objc = { workspace = true }
+objc-foundation = { workspace = true }
+core-foundation = { workspace = true }
+mobile-entry-point = { workspace = true }
+
+[lib]
+name = "ironsights_mobile"
+crate-type = ["cdylib", "staticlib"]
+path = "src/lib.rs"
+
+# Android configuration
+[package.metadata.android]
+build_targets = ["aarch64-linux-android", "armv7-linux-androideabi"]
+min_sdk_version = 21
+target_sdk_version = 34
+
+# iOS configuration
+[package.metadata.ios]
+deployment_target = "12.0"
+
+[features]
+default = ["android"]
+android = []
+ios = []

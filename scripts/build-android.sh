@@ -1,5 +1,5 @@
 #!/bin/bash
-# scripts/build-android.sh - Build Android APK for Ballistics Analyzer
+# scripts/build-android.sh - Build Android APK for IronSights
 
 set -e
 
@@ -11,7 +11,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}  Building Ballistics Analyzer Android ${NC}"
+echo -e "${GREEN}  Building IronSights Android ${NC}"
 echo -e "${GREEN}========================================${NC}"
 
 # Check for Android SDK
@@ -76,7 +76,7 @@ mkdir -p ../../build/android
 
 # Copy unsigned APK
 cp app/build/outputs/apk/release/app-release-unsigned.apk \
-    ../../build/android/ballistics-analyzer-unsigned.apk
+    ../../build/android/ironsights-unsigned.apk
 
 echo -e "${GREEN}✓ Unsigned APK created${NC}"
 
@@ -90,8 +90,8 @@ if [ -f "$KEYSTORE_PATH" ]; then
         $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner sign \
             --ks "$KEYSTORE_PATH" \
             --ks-key-alias "${KEY_ALIAS:-ballistics}" \
-            --out ../../build/android/ballistics-analyzer.apk \
-            ../../build/android/ballistics-analyzer-unsigned.apk
+            --out ../../build/android/ironsights.apk \
+            ../../build/android/ironsights-unsigned.apk
         
         echo -e "${GREEN}✓ Signed APK created${NC}"
     else
@@ -110,7 +110,7 @@ if [ "${BUILD_AAB:-false}" = "true" ]; then
     ./gradlew bundleRelease
     
     cp app/build/outputs/bundle/release/app-release.aab \
-        ../../build/android/ballistics-analyzer.aab
+        ../../build/android/ironsights.aab
     
     echo -e "${GREEN}✓ AAB created${NC}"
 fi
@@ -123,20 +123,20 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}  Build Complete!                       ${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo -e "${BLUE}Output files:${NC}"
-echo -e "  • ${YELLOW}build/android/ballistics-analyzer-unsigned.apk${NC}"
+echo -e "  • ${YELLOW}build/android/ironsights-unsigned.apk${NC}"
 
-if [ -f "build/android/ballistics-analyzer.apk" ]; then
-    echo -e "  • ${YELLOW}build/android/ballistics-analyzer.apk${NC} (signed)"
+if [ -f "build/android/ironsights.apk" ]; then
+    echo -e "  • ${YELLOW}build/android/ironsights.apk${NC} (signed)"
 fi
 
-if [ -f "build/android/ballistics-analyzer.aab" ]; then
-    echo -e "  • ${YELLOW}build/android/ballistics-analyzer.aab${NC} (Play Store)"
+if [ -f "build/android/ironsights.aab" ]; then
+    echo -e "  • ${YELLOW}build/android/ironsights.aab${NC} (Play Store)"
 fi
 
 # Display APK info if aapt is available
 if command -v aapt &> /dev/null; then
     echo -e "\n${BLUE}APK Information:${NC}"
-    aapt dump badging build/android/ballistics-analyzer-unsigned.apk | \
+    aapt dump badging build/android/ironsights-unsigned.apk | \
         grep -E "package:|sdkVersion:|targetSdkVersion:|application-label:" | \
         sed 's/^/  /'
 fi

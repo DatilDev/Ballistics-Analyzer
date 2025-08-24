@@ -77,7 +77,7 @@ impl LoadDataLibrary {
     fn get_db_path(&self) -> PathBuf {
         // Get the data directory for the application
         let mut path = dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("."));
-        path.push("ballistics_analyzer");
+        path.push("ironsights");
         let _ = std::fs::create_dir_all(&path);
         path.push("ammo_data.db");
         path
