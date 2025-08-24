@@ -1,0 +1,64 @@
+# Simplified Makefile for Android & Arch Linux
+PLATFORMS ?= android arch
+BUILD_TYPE ?= release
+CARGO_FLAGS := $(if $(filter release,$(BUILD_TYPE)),--release,)
+
+# Colors
+RED := \033[0;31m
+GREEN := \033[0;32m
+YELLOW := \033[1;33m
+NC := \033[0m
+
+# Platform detection
+IS_ARCH := $(shell test -f /etc/arch-release && echo yes)
+HAS_ANDROID := $(shell test -n "$$ANDROID_HOME" && echo yes)
+
+.PHONY: help build clean test
+
+help:
+	@echo "$(GREEN)Ballistics Analyzer - Android & Arch Linux$(NC)"
+	@echo "Arch Linux: $(IS_ARCH), Android SDK: $(HAS_ANDROID)"
+	@echo ""
+	@echo "Commands:"
+	@echo "  make build        - Build for available platforms"
+	@echo "  make build-arch   - Build for Arch Linux"
+	@echo "  make build-android - Build Android APK"
+	@echo "  make clean        - Clean all artifacts"
+	@echo "  make test         - Run tests"
+
+build:
+	@if [ "$(IS_ARCH)" = "yes" ]; then \
+		$(MAKE) build-arch; \
+	fi
+	@if [ "$(HAS_ANDROID)" = "yes" ]; then \
+		$(MAKE) build-android; \
+	fi
+	@if [ "$(IS_ARCH)" != "yes" ] && [ "$(HAS_ANDROID)" != "yes" ]; then \
+		echo "$(YELLOW)Building generic Linux binary...$(NC)"; \
+		cargo build $(CARGO_FLAGS) -p ballistics-desktop --no-default-features --features minimal; \
+	fi
+
+build-arch:
+	@echo "$(YELLOW)Building for Arch Linux...$(NC)"
+	cargo build $(CARGO_FLAGS) -p ballistics-desktop --features arch-linux
+	@if [ "$(IS_ARCH)" = "yes" ] && [ -f scripts/create-arch-package.sh ]; then \
+		./scripts/create-arch-package.sh; \
+	fi
+	@echo "$(GREEN)✓ Arch build complete$(NC)"
+
+build-android:
+	@if [ -z "$$ANDROID_HOME" ]; then \
+		echo "$(RED)Error: ANDROID_HOME not set$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)Building Android...$(NC)"
+	@cd ballistics-mobile && \
+		cargo ndk --target aarch64-linux-android build $(CARGO_FLAGS)
+	@echo "$(GREEN)✓ Android build complete$(NC)"
+
+clean:
+	cargo clean
+	rm -rf build/ pkg/
+
+test:
+	cargo test --workspace

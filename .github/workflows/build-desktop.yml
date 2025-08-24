@@ -1,0 +1,371 @@
+# .github/workflows/build-desktop.yml
+name: Build Desktop Applications
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - debug
+          - release
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build--linux:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+            arch: x64
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            arch: x64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            arch: arm64
+            
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+    
+    - name: Install dependencies (Ubuntu/Debian)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          pkg-config \
+          libssl-dev \
+          libgtk-3-dev \
+          libwebkit2gtk-4.0-dev \
+          libappindicator3-dev \
+          librsvg2-dev \
+          libx11-dev \
+          libxcb1-dev \
+          libxcb-render0-dev \
+          libxcb-shape0-dev \
+          libxcb-xfixes0-dev \
+          libxkbcommon-dev \
+          libgl1-mesa-dev \
+          libegl1-mesa-dev \
+          libwayland-dev
+    
+    - name: Install cross-compilation tools (ARM64)
+      if: matrix.arch == 'arm64'
+      run: |
+        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+    
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.target }}-cargo-
+    
+    - name: Build ballistics_core
+      run: |
+        cd ballistics_core
+        cargo build --release --target ${{ matrix.target }}
+    
+    - name: Build ballistics-desktop
+      run: |
+        cd ballistics-desktop
+        cargo build --release --target ${{ matrix.target }}
+    
+    - name: Strip binary
+      run: |
+        if [[ "${{ matrix.arch }}" == "x64" ]]; then
+          strip target/${{ matrix.target }}/release/ballistics-analyzer
+        fi
+    
+    - name: Create AppImage
+      if: matrix.arch == 'x64'
+      run: |
+        ./scripts/create-appimage.sh ${{ matrix.target }}
+    
+    - name: Package application
+      run: |
+        mkdir -p dist
+        cp target/${{ matrix.target }}/release/ballistics-analyzer dist/
+        cp -r ballistics-desktop/assets dist/
+        cp README.md LICENSE PRIVACY_POLICY.md dist/
+        tar -czf ballistics-analyzer-linux-${{ matrix.arch }}.tar.gz -C dist .
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ballistics-analyzer-linux-${{ matrix.arch }}-${{ matrix.os }}
+        path: |
+          ballistics-analyzer-linux-${{ matrix.arch }}.tar.gz
+          *.AppImage
+    
+  build-windows:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            arch: x64
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            arch: x86
+          - os: windows-latest  
+            target: aarch64-pc-windows-msvc
+            arch: arm64
+            
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+    
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.arch }}
+    
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.target }}-cargo-
+    
+    - name: Build ballistics_core
+      run: |
+        cd ballistics_core
+        cargo build --release --target ${{ matrix.target }}
+    
+    - name: Build ballistics-desktop
+      run: |
+        cd ballistics-desktop
+        cargo build --release --target ${{ matrix.target }}
+      env:
+        RUSTFLAGS: "-C target-feature=+crt-static"
+    
+    - name: Package application
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path dist
+        Copy-Item "target\${{ matrix.target }}\release\ballistics-analyzer.exe" dist\
+        Copy-Item -Recurse "ballistics-desktop\assets" dist\
+        Copy-Item "README.md", "LICENSE", "PRIVACY_POLICY.md" dist\
+        Compress-Archive -Path dist\* -DestinationPath "ballistics-analyzer-windows-${{ matrix.arch }}.zip"
+    
+    - name: Create installer
+      if: matrix.arch == 'x64'
+      run: |
+        choco install nsis -y
+        ./scripts/create-windows-installer.ps1
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ballistics-analyzer-windows-${{ matrix.arch }}
+        path: |
+          ballistics-analyzer-windows-${{ matrix.arch }}.zip
+          ballistics-analyzer-setup.exe
+    
+  build-macos:
+    strategy:
+      matrix:
+        include:
+          - os: macos-12
+            target: x86_64-apple-darwin
+            arch: x64
+          - os: macos-13
+            target: x86_64-apple-darwin
+            arch: x64
+          - os: macos-14
+            target: aarch64-apple-darwin
+            arch: arm64
+            
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+    
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.target }}-cargo-
+    
+    - name: Build ballistics_core
+      run: |
+        cd ballistics_core
+        cargo build --release --target ${{ matrix.target }}
+    
+    - name: Build ballistics-desktop
+      run: |
+        cd ballistics-desktop
+        cargo build --release --target ${{ matrix.target }}
+    
+    - name: Create app bundle
+      run: |
+        chmod +x scripts/create-macos-bundle.sh
+        ./scripts/create-macos-bundle.sh target/${{ matrix.target }}/release/ballistics-analyzer
+    
+    - name: Sign app (if certificate available)
+      if: env.MACOS_CERTIFICATE
+      env:
+        MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+        MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
+      run: |
+        echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+        security create-keychain -p temp build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p temp build.keychain
+        security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k temp build.keychain
+        codesign --deep --force --verify --verbose --sign "$MACOS_IDENTITY" "build/macos/Ballistics Analyzer.app"
+    
+    - name: Create DMG
+      run: |
+        brew install create-dmg || true
+        create-dmg \
+          --volname "Ballistics Analyzer" \
+          --window-pos 200 120 \
+          --window-size 600 400 \
+          --icon-size 100 \
+          --icon "Ballistics Analyzer.app" 175 120 \
+          --hide-extension "Ballistics Analyzer.app" \
+          --app-drop-link 425 120 \
+          "ballistics-analyzer-macos-${{ matrix.arch }}.dmg" \
+          "build/macos/Ballistics Analyzer.app" || \
+        hdiutil create -volname "Ballistics Analyzer" -srcfolder "build/macos/Ballistics Analyzer.app" -ov -format UDZO "ballistics-analyzer-macos-${{ matrix.arch }}.dmg"
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ballistics-analyzer-macos-${{ matrix.arch }}
+        path: |
+          ballistics-analyzer-macos-${{ matrix.arch }}.dmg
+    
+  build-arch-linux:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    
+    steps:
+    - name: Update system
+      run: |
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm git base-devel rust cargo pkg-config
+    
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        pacman -S --noconfirm \
+          openssl \
+          gtk3 \
+          webkit2gtk \
+          libappindicator-gtk3 \
+          librsvg \
+          libx11 \
+          libxcb \
+          libxkbcommon \
+          mesa \
+          wayland
+    
+    - name: Build
+      run: |
+        cd ballistics_core && cargo build --release
+        cd ../ballistics-desktop && cargo build --release
+    
+    - name: Create PKGBUILD
+      run: |
+        mkdir -p pkg
+        ./scripts/create-pkgbuild.sh
+    
+    - name: Build package
+      run: |
+        cd pkg
+        makepkg -si --noconfirm
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ballistics-analyzer-arch-linux
+        path: pkg/*.pkg.tar.zst
+    
+  create-release:
+    needs: [build-linux, build-windows, build-macos, build-arch-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          **/*.tar.gz
+          **/*.zip
+          **/*.dmg
+          **/*.AppImage
+          **/*.pkg.tar.zst
+          **/*.exe
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,99 @@
+name: Build Android & Arch Linux Only
+
+on:
+  push:
+    branches: [ feature/android-arch-only ]
+    tags:
+      - 'v*-android-arch'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'ballistics-mobile/**'
+      - 'ballistics-desktop/**'
+      - '.github/workflows/build-android-arch.yml'
+
+jobs:
+  build-arch:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Arch Linux
+      run: |
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm git base-devel rust cargo pkg-config \
+          openssl gtk3 webkit2gtk libappindicator-gtk3 librsvg \
+          libx11 libxcb libxkbcommon mesa wayland
+    
+    - name: Build for Arch
+      run: |
+        cd ballistics_core && cargo build --release
+        cd ../ballistics-desktop && cargo build --release
+        
+    - name: Create PKGBUILD
+      run: |
+        mkdir -p pkg
+        ./scripts/create-arch-package.sh
+        
+    - name: Upload Arch artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: arch-linux-package
+        path: pkg/*.pkg.tar.zst
+
+  build-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Android Build Environment
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        packages: |
+          platform-tools
+          platforms;android-34
+          build-tools;34.0.0
+          ndk;26.1.10909125
+          
+    - name: Setup Rust for Android
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: |
+          aarch64-linux-android
+          armv7-linux-androideabi
+          
+    - name: Build Android APK
+      run: |
+        cd ballistics-mobile
+        ./gradlew assembleRelease
+        
+    - name: Upload Android artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: android-apk
+        path: ballistics-mobile/android/app/build/outputs/apk/release/*.apk
+
+  create-release:
+    needs: [build-arch, build-android]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          **/*.pkg.tar.zst
+          **/*.apk

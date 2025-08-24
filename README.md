@@ -58,24 +58,24 @@ Works instantly in any modern browser - install it as an app for offline access!
 
 ## 📦 Installation
 
-### Option 1: Web App (Recommended)
-1. Visit [https://datildev.github.io/Ballistics-Analyzer/](https://datildev.github.io/Ballistics-Analyzer/)
-2. Click "Install" when prompted (or menu → "Install App")
-3. Launch from your home screen or applications folder
+### Primary Platforms
 
-### Option 2: Desktop Applications
-Download from [Latest Release](https://github.com/DatilDev/Ballistics-Analyzer/releases/latest):
+#### Arch Linux
+```bash
+# From AUR (when available)
+yay -S ballistics-analyzer
 
-| Platform | Download | Requirements |
-|----------|----------|--------------|
-| Windows | [ballistics-analyzer-windows.exe](https://github.com/DatilDev/Ballistics-Analyzer/releases/latest/download/ballistics-analyzer-windows.exe) | Windows 10+ |
-| macOS | [ballistics-analyzer-macos](https://github.com/DatilDev/Ballistics-Analyzer/releases/latest/download/ballistics-analyzer-macos) | macOS 11+ |
-| Linux | [ballistics-analyzer-linux](https://github.com/DatilDev/Ballistics-Analyzer/releases/latest/download/ballistics-analyzer-linux) | GTK3, glibc 2.31+ |
-| Arch Linux | [ballistics-analyzer.pkg.tar.zst](https://github.com/DatilDev/Ballistics-Analyzer/releases/latest/download/ballistics-analyzer.pkg.tar.zst) | Via pacman |
+# From source
+git clone https://github.com/DatilDev/Ballistics-Analyzer.git
+cd Ballistics-Analyzer
+make build-arch
+sudo make install
 
-### Option 3: Mobile Apps
-- **Android/iOS**: Use the PWA version for best experience
-- **Android APK**: Coming soon (development libraries available)
+# Download APK from releases
+# Or build from source:
+export ANDROID_HOME=/path/to/sdk
+make build-android
+# APK will be in ballistics-mobile/android/app/build/outputs/apk/
 
 ## 🚀 Quick Start Guide
 

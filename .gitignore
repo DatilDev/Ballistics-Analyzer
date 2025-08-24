@@ -76,3 +76,13 @@ Pods/
 # But ignore temporary files in assets
 /assets/*.tmp
 /assets/*.bak
+
+# Android/Arch branch specific
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+build/windows/
+build/macos/
+build/debian/

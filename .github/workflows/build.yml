@@ -1,283 +1,88 @@
-name: Build and Release
+name: Build Android & Arch Linux
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*' ]
+    branches: [ main, develop ]
+    tags: ['v*']
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: 1
-  RUSQLITE_BUNDLED: 1
-  LIBSQLITE3_SYS_BUNDLING: 1
 
 jobs:
-  # Web/PWA Build
-  build-web:
-    name: Build PWA
+  # Primary platforms - always build
+  build-arch:
     runs-on: ubuntu-latest
+    container: archlinux:latest
+    
     steps:
     - uses: actions/checkout@v4
     
+    - name: Setup Arch environment
+      run: |
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm base-devel rust cargo gtk3 webkit2gtk
+        
+    - name: Build
+      run: make build-arch
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: arch-linux-build
+        path: |
+          pkg/*.pkg.tar.zst
+          target/release/ballistics-analyzer
+
+  build-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
       with:
-        targets: wasm32-unknown-unknown
+        targets: aarch64-linux-android armv7-linux-androideabi
         
-    - name: Install wasm-pack
-      run: |
-        curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+    - name: Build
+      run: make build-android
       
-    - name: Build WASM
-      run: |
-        wasm-pack build --target web --out-dir pkg --release \
-          --no-default-features --features web -- \
-          --no-default-features --features web
-        
-    - name: Prepare dist
-      run: |
-        mkdir -p dist
-        cp -r pkg dist/ 2>/dev/null || true
-        cp index.html dist/ 2>/dev/null || echo "No index.html"
-        cp manifest.json dist/ 2>/dev/null || echo "No manifest.json"
-        
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
       with:
-        name: pwa-build
-        path: dist/
+        name: android-apk
+        path: ballistics-mobile/android/app/build/outputs/apk/release/*.apk
 
-  # Desktop Builds
-  build-desktop:
-    name: Build ${{ matrix.name }}
+  # Secondary platforms - only on tags/releases
+  build-others:
+    if: startsWith(github.ref, 'refs/tags/')
     strategy:
-      fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            name: Linux
-            target: x86_64-unknown-linux-gnu
-            binary: ballistics-analyzer
-            
-          - os: windows-latest
-            name: Windows
-            target: x86_64-pc-windows-msvc
-            binary: ballistics-analyzer.exe
-            
-          - os: macos-13
-            name: macOS-x64
-            target: x86_64-apple-darwin
-            binary: ballistics-analyzer
-            
-          - os: macos-14
-            name: macOS-arm64
-            target: aarch64-apple-darwin
-            binary: ballistics-analyzer
-            
+        os: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     
     steps:
     - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
     
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+    - name: Build fallback binary
+      run: |
+        cd ballistics-desktop
+        cargo build --release --features all-platforms
+        
+    - name: Upload
+      uses: actions/upload-artifact@v3
       with:
-        targets: ${{ matrix.target }}
-    
-    - name: Install Linux dependencies
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          libgtk-3-dev \
-          libssl-dev \
-          pkg-config \
-          libxcb-render0-dev \
-          libxcb-shape0-dev \
-          libxcb-xfixes0-dev \
-          libxkbcommon-dev \
-          libglu1-mesa-dev \
-          libudev-dev \
-          clang \
-          cmake
-    
-    - name: Install macOS dependencies
-      if: runner.os == 'macOS'
-      run: |
-        brew install cmake
-        brew install pkg-config
-    
-    - name: Cache cargo
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-${{ matrix.target }}-
-    
-    - name: Build
-      run: |
-        cargo build --release --target ${{ matrix.target }} \
-          --no-default-features --features desktop
-      env:
-        RUSQLITE_BUNDLED: 1
-        LIBSQLITE3_SYS_BUNDLING: 1
-        CC: clang
-        
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.name }}-build
-        path: target/${{ matrix.target }}/release/${{ matrix.binary }}
-
-  # Arch Linux Build
-  build-arch:
-    name: Build Arch Linux
-    runs-on: ubuntu-latest
-    container: 
-      image: archlinux:latest
-    
-    steps:
-    - name: Setup build environment
-      run: |
-        pacman -Syu --noconfirm
-        pacman -S --noconfirm \
-          base-devel \
-          rust \
-          cargo \
-          git \
-          gtk3 \
-          pkgconf \
-          clang \
-          cmake
-        
-    - uses: actions/checkout@v4
-      
-    - name: Build package
-      run: |
-        export RUSQLITE_BUNDLED=1
-        export LIBSQLITE3_SYS_BUNDLING=1
-        export CC=clang
-        cargo build --release --no-default-features --features desktop
-        
-    - name: Package binary
-      run: |
-        mkdir -p package/usr/bin
-        cp target/release/ballistics-analyzer package/usr/bin/
-        tar czf ballistics-analyzer-arch.tar.gz -C package .
-        
-    - name: Upload Arch package
-      uses: actions/upload-artifact@v4
-      with:
-        name: arch-build
-        path: ballistics-analyzer-arch.tar.gz
-
-  # Debian package build
-  build-debian:
-    name: Build Debian Package
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          libgtk-3-dev \
-          libssl-dev \
-          pkg-config \
-          libxcb-render0-dev \
-          libxcb-shape0-dev \
-          libxcb-xfixes0-dev \
-          libxkbcommon-dev \
-          libglu1-mesa-dev \
-          libudev-dev \
-          clang \
-          cmake \
-          dpkg-dev \
-          debhelper
-    
-    - name: Setup Rust
-      uses: dtolnay/rust-toolchain@stable
-    
-    - name: Build
-      run: |
-        export RUSQLITE_BUNDLED=1
-        export LIBSQLITE3_SYS_BUNDLING=1
-        export CC=clang
-        cargo build --release --no-default-features --features desktop
-    
-    - name: Create Debian package structure
-      run: |
-        mkdir -p debian/usr/bin
-        mkdir -p debian/usr/share/applications
-        mkdir -p debian/DEBIAN
-        
-        cp target/release/ballistics-analyzer debian/usr/bin/
-        
-        cat > debian/DEBIAN/control << EOF
-        Package: ballistics-analyzer
-        Version: 1.0.0
-        Section: utils
-        Priority: optional
-        Architecture: amd64
-        Maintainer: Ballistics Analyzer Contributors
-        Description: Professional ballistics calculator
-         A comprehensive ballistics calculator with hardware integration
-        EOF
-        
-        dpkg-deb --build debian ballistics-analyzer-debian.deb
-    
-    - name: Upload Debian package
-      uses: actions/upload-artifact@v4
-      with:
-        name: debian-build
-        path: ballistics-analyzer-debian.deb
-
-  # Android Build (simplified)
-  build-android:
-    name: Build Android
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: aarch64-linux-android
-    
-    - name: Setup Android NDK
-      uses: nttld/setup-ndk@v1
-      with:
-        ndk-version: r25c
-    
-    - name: Install cargo-ndk
-      run: |
-        cargo install cargo-ndk
-        
-    - name: Build Android library
-      run: |
-        export RUSQLITE_BUNDLED=1
-        cargo ndk -t arm64-v8a build --release \
-          --no-default-features --features android
-      continue-on-error: true
-        
-    - name: Upload Android artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: android-build
-        path: target/aarch64-linux-android/release/*.so
-        if-no-files-found: warn
+        name: ${{ matrix.os }}-fallback
+        path: target/release/ballistics-analyzer*
