@@ -1,4 +1,4 @@
-use crate::models::{FirearmProfile, AmmunitionProfile};
+use crate::models::FirearmProfile;
 use uuid::Uuid;
 use chrono::Utc;
 use anyhow::Result;

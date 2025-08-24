@@ -86,3 +86,14 @@ Pods/
 build/windows/
 build/macos/
 build/debian/
+
+# Android/Arch branch exclusions
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+/ballistics-wasm/
+build/windows/
+build/macos/
+build/debian/

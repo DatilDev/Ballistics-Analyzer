@@ -42,6 +42,8 @@ pub struct CalculationData {
     pub environment: EnvironmentalConditions,
     pub wind: WindConditions,
     pub target_distance: f64,
+    pub(crate) firearm_name: (),
+    pub(crate) ammo_name: (),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -4,16 +4,16 @@ members = [
     "ballistics_core",
     "ballistics-desktop",
     "ballistics-mobile", 
-    # "ballistics-wasm",
 ]
+
+exclude = ["ballistics-wasm"]
 
 # Feature flags for platform control
 [workspace.metadata.platforms]
 default = ["android", "arch-linux"]
 android = []
 arch-linux = []
-all-platforms = ["windows", "macos", "debian"]  # For future use
-minimal = []  # Core only builds
+minimal = []  # for fallback builds
 
 [workspace.package]
 version = "1.0.0"

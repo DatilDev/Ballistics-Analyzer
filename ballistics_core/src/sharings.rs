@@ -1,30 +1,22 @@
-use anyhow::Result;
-use serde::{Serialize, Deserialize};
+// Minimal sharing module for android-arch branch
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SharedData {
-    pub id: String,
-    pub data_type: String,
+pub struct ShareData {
     pub content: String,
-    pub timestamp: i64,
+    pub format: ShareFormat,
 }
 
-pub struct SharingManager {
-    // Implementation details
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ShareFormat {
+    Text,
+    Json,
+    Csv,
 }
 
-impl SharingManager {
-    pub fn new() -> Self {
-        Self {}
-    }
-    
-    pub fn share_data(&self, data: &SharedData) -> Result<String> {
-        // Generate share link or code
-        Ok(format!("share_{}", data.id))
-    }
-    
-    pub fn import_data(&self, share_code: &str) -> Result<SharedData> {
-        // Import shared data
-        todo!("Implement data import")
+pub fn create_share_text(data: &str) -> ShareData {
+    ShareData {
+        content: data.to_string(),
+        format: ShareFormat::Text,
     }
 }

@@ -1,14 +1,14 @@
 use crate::models::{CalculationData, TrajectoryPoint, EnvironmentalConditions};
-use anyhow::Result;
+//use anyhow::Result;
 
 pub struct BallisticsCalculator;
 
 impl BallisticsCalculator {
-    pub fn new(data: CalculationData) -> Self {
-        Self
+    pub fn new(_data: CalculationData) -> Self {
+        BallisticsCalculator
     }
     
-    pub fn calculate_trajectory(data: &mut CalculationData) {
+    pub fn calculate_trajectory(_data: &mut CalculationData) {
         // Simple trajectory calculation
         // This modifies the data in place
         // In a real implementation, this would calculate actual trajectory
@@ -18,7 +18,7 @@ impl BallisticsCalculator {
         data: &CalculationData, 
         max_range: f64, 
         step: f64
-    ) -> Result<Vec<TrajectoryPoint>> {
+    ) -> Result<TrajectoryPoint, anyhow::Error> {
         let mut trajectory = Vec::new();
         let mut current_range = 0.0;
         

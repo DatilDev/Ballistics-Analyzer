@@ -39,23 +39,26 @@ build:
 	fi
 
 build-arch:
-	@echo "$(YELLOW)Building for Arch Linux...$(NC)"
+	@echo "$(YELLOW)Building Arch Linux package...$(NC)"
 	cargo build $(CARGO_FLAGS) -p ballistics-desktop --features arch-linux
-	@if [ "$(IS_ARCH)" = "yes" ] && [ -f scripts/create-arch-package.sh ]; then \
-		./scripts/create-arch-package.sh; \
+	@if [ "$(IS_ARCH)" = "yes" ]; then \
+		makepkg -f --noconfirm; \
+		echo "$(GREEN)✓ Package created: *.pkg.tar.zst$(NC)"; \
 	fi
-	@echo "$(GREEN)✓ Arch build complete$(NC)"
 
 build-android:
 	@if [ -z "$$ANDROID_HOME" ]; then \
 		echo "$(RED)Error: ANDROID_HOME not set$(NC)"; \
 		exit 1; \
 	fi
-	@echo "$(YELLOW)Building Android...$(NC)"
+	@echo "$(YELLOW)Building Android APK...$(NC)"
 	@cd ballistics-mobile && \
-		cargo ndk --target aarch64-linux-android build $(CARGO_FLAGS)
-	@echo "$(GREEN)✓ Android build complete$(NC)"
-
+		cargo ndk --target aarch64-linux-android --target armv7-linux-androideabi build $(CARGO_FLAGS) && \
+		cd android && \
+		chmod +x gradlew && \
+		./gradlew assembleRelease
+	@echo "$(GREEN)✓ APK created in ballistics-mobile/android/app/build/outputs/$(NC)"
+	
 clean:
 	cargo clean
 	rm -rf build/ pkg/

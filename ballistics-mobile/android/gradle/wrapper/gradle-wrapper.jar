@@ -1,0 +1,2 @@
+cd ballistics-mobile/android
+gradle wrapper --gradle-version 8.2

@@ -59,9 +59,7 @@ objc = "0.2"
 [features]
 default = ["arch-linux"]
 arch-linux = ["hardware"]
-android = []  # Android companion mode
-all-platforms = []
-minimal = []  # Core features only
+minimal = []  # Core features only, no platform-specific
 hardware = ["serialport", "libudev"]
 nostr = ["ballistics_core/nostr"]
 

@@ -29,14 +29,9 @@ jobs:
     
     - name: Build for Arch
       run: |
-        cd ballistics_core && cargo build --release
-        cd ../ballistics-desktop && cargo build --release
-        
-    - name: Create PKGBUILD
-      run: |
-        mkdir -p pkg
-        ./scripts/create-arch-package.sh
-        
+        cargo build --release -p ballistics_core
+        cargo build --release -p ballistics-desktop --features arch-linux
+        makepkg -f --noconfirm
     - name: Upload Arch artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -74,6 +69,9 @@ jobs:
     - name: Build Android APK
       run: |
         cd ballistics-mobile
+        cargo ndk --target aarch64-linux-android --target armv7-linux-androideabi build --release
+        cd android
+        chmod +x gradlew  # Ensure it's executable
         ./gradlew assembleRelease
         
     - name: Upload Android artifacts

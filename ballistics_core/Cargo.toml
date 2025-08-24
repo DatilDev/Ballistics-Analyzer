@@ -1,9 +1,9 @@
 [package]
 name = "ballistics_core"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
+version = "1.0.0"
+edition = "2021"
+authors = ["Ballistics Analyzer Contributors"]
+license = "MIT"
 
 [dependencies]
 serde = { workspace = true }
@@ -15,7 +15,12 @@ hex = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 rand = { workspace = true }
-futures = { workspace = true }
+
+# Make futures optional since it's used in async feature
+futures = { workspace = true, optional = true }
+
+# Optional logging
+env_logger = { version = "0.11", optional = true }
 
 # Optional features for different platforms
 egui = { workspace = true, optional = true }
@@ -27,9 +32,11 @@ nostr = { workspace = true, optional = true }
 nostr-sdk = { workspace = true, optional = true, features = ["nip04", "nip07"] }
 secp256k1 = { workspace = true, optional = true }
 
-# Platform-specific optional dependencies
+# Storage with connection pooling
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rusqlite = { workspace = true, optional = true }
+r2d2 = { version = "0.8", optional = true }
+r2d2_sqlite = { version = "0.24", optional = true }
 tokio = { workspace = true, features = ["rt", "macros"], optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -40,9 +47,11 @@ chrono = { workspace = true, features = ["wasmbind"] }
 [features]
 default = ["gui", "storage"]
 gui = ["egui", "egui_extras", "egui_plot"]
-storage = ["rusqlite"]
+storage = ["rusqlite", "r2d2", "r2d2_sqlite"]
 nostr = ["dep:nostr", "dep:nostr-sdk", "dep:secp256k1"]
-async = ["tokio"]
+async = ["tokio", "futures"]  # Both are now optional dependencies
+hardware = []
+logging = ["env_logger"]
 
 [lib]
 name = "ballistics_core"
